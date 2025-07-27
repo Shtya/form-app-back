@@ -1,0 +1,863 @@
+{
+	"info": {
+		"_postman_id": "ab2356cc-8e84-4a65-9c5e-b043927ed06d",
+		"name": "explain endpoints",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "23301799",
+		"_collection_link": "https://abdullah-7247.postman.co/workspace/venuat-backend-~8ad624ca-eb0e-4b15-8d41-df0b7fee001c/collection/23301799-ab2356cc-8e84-4a65-9c5e-b043927ed06d?action=share&source=collection_link&creator=23301799"
+	},
+	"item": [
+		{
+			"name": "GET All Copy",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{accessToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{url}}/api/v1/users",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"users"
+					],
+					"query": [
+						{
+							"key": "role",
+							"value": "user",
+							"disabled": true
+						},
+						{
+							"key": "role",
+							"value": "provider",
+							"disabled": true
+						},
+						{
+							"key": "role",
+							"value": "admin",
+							"disabled": true
+						},
+						{
+							"key": "role",
+							"value": "technician",
+							"disabled": true
+						}
+					]
+				}
+			},
+			"response": [
+				{
+					"name": "GET All Copy",
+					"originalRequest": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/api/v1/users",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"users"
+							],
+							"query": [
+								{
+									"key": "role",
+									"value": "user",
+									"disabled": true
+								},
+								{
+									"key": "role",
+									"value": "provider",
+									"disabled": true
+								},
+								{
+									"key": "role",
+									"value": "admin",
+									"disabled": true
+								},
+								{
+									"key": "role",
+									"value": "technician",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "X-Powered-By",
+							"value": "Express"
+						},
+						{
+							"key": "Access-Control-Allow-Origin",
+							"value": "*"
+						},
+						{
+							"key": "Access-Control-Allow-Credentials",
+							"value": "true"
+						},
+						{
+							"key": "Access-Control-Expose-Headers",
+							"value": "Content-Length,Content-Range"
+						},
+						{
+							"key": "Content-Type",
+							"value": "application/json; charset=utf-8"
+						},
+						{
+							"key": "Content-Length",
+							"value": "1664"
+						},
+						{
+							"key": "ETag",
+							"value": "W/\"680-6uHfysyycQNGG3e7N645JPYV0nw\""
+						},
+						{
+							"key": "Date",
+							"value": "Tue, 08 Jul 2025 00:41:49 GMT"
+						},
+						{
+							"key": "Connection",
+							"value": "keep-alive"
+						},
+						{
+							"key": "Keep-Alive",
+							"value": "timeout=5"
+						}
+					],
+					"cookie": [],
+					"body": "[\n    {\n        \"id\": 1,\n        \"name\": \"Admin\",\n        \"email\": \"admin@gmail.com\",\n        \"password\": \"$argon2id$v=19$m=65536,t=3,p=4$Wv+aYtNXJE19UXBNP55vrA$YSY5xr7vAxY/KXvjJlULKRkNio1YQLBcZ4wNA30FDvM\",\n        \"role\": \"admin\",\n        \"created_at\": \"2025-07-07T12:50:51.016Z\",\n        \"updated_at\": \"2025-07-07T12:50:51.016Z\",\n        \"formSubmissions\": [\n            {\n                \"id\": 3,\n                \"answers\": {\n                    \"age\": \"29\",\n                    \"city\": \"New York\",\n                    \"name\": \"John Doe\",\n                    \"email\": \"john.doe@example.com\",\n                    \"phone\": \"+123456789\",\n                    \"gender\": \"Male\",\n                    \"rating\": \"5\",\n                    \"country\": \"USA\",\n                    \"comments\": \"Looking forward to more features.\",\n                    \"feedback\": \"Great service and user-friendly platform.\",\n                    \"interests\": [\n                        \"Technology\",\n                        \"Fitness\",\n                        \"Travel\"\n                    ],\n                    \"subscribe\": \"Yes\",\n                    \"experience\": \"5 years\",\n                    \"occupation\": \"Software Engineer\",\n                    \"satisfaction\": \"Very satisfied\",\n                    \"recommendation\": \"Absolutely\",\n                    \"preferred_contact\": \"Email\",\n                    \"newsletter_frequency\": \"Weekly\"\n                },\n                \"created_at\": \"2025-07-07T21:36:17.378Z\"\n            }\n        ]\n    },\n    {\n        \"id\": 5,\n        \"name\": \"ahmed\",\n        \"email\": \"ahmed@gmail.com\",\n        \"password\": \"$argon2id$v=19$m=65536,t=3,p=4$Jb7w23eVZpTNKGHlHRetIw$eGczyOAXj6cmmR9ddXir0hurLMhRlO0CvrlZgBEfN3g\",\n        \"role\": \"admin\",\n        \"created_at\": \"2025-07-07T20:46:48.365Z\",\n        \"updated_at\": \"2025-07-07T20:46:48.365Z\",\n        \"formSubmissions\": []\n    },\n    {\n        \"id\": 4,\n        \"name\": \"New User\",\n        \"email\": \"user@gmail.com\",\n        \"password\": \"$argon2id$v=19$m=65536,t=3,p=4$vOCMFnBrwhcCGU0Uuagitw$eZ4GuTeTAeBxSXluKQzCRhBaSFX/MxjSdEc+bFjlvk8\",\n        \"role\": \"user\",\n        \"created_at\": \"2025-07-07T19:19:54.958Z\",\n        \"updated_at\": \"2025-07-07T19:19:54.958Z\",\n        \"formSubmissions\": []\n    },\n    {\n        \"id\": 3,\n        \"name\": \"New User\",\n        \"email\": \"newuser@example.com\",\n        \"password\": \"$argon2id$v=19$m=65536,t=3,p=4$gXVRZVdZV6eBmtqkbcA0BA$XNJrFYahBZltsAWtO63UpZAQrz6kHwgYLffXWjFdYgQ\",\n        \"role\": \"user\",\n        \"created_at\": \"2025-07-07T13:13:07.593Z\",\n        \"updated_at\": \"2025-07-07T13:13:07.593Z\",\n        \"formSubmissions\": []\n    }\n]"
+				}
+			]
+		},
+		{
+			"name": "DEL Copy",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				},
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{accessToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "DELETE",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{url}}/api/v1/users/2",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"users",
+						"2"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "POST Copy",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{accessToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"title\": \" Feedback Form\",\r\n  \"description\": \"Please provide your honest feedback\",\r\n  \"fields\": [\r\n    {\r\n      \"label\": \"Full Name\",\r\n      \"key\": \"fullName\",\r\n      \"type\": \"text\",\r\n      \"required\": true,\r\n      \"order\": 1\r\n    },\r\n    {\r\n      \"label\": \"Email\",\r\n      \"key\": \"email\",\r\n      \"type\": \"text\",\r\n      \"required\": true,\r\n      \"order\": 2\r\n    },\r\n    {\r\n      \"label\": \"Satisfaction Level\",\r\n      \"key\": \"satisfaction\",\r\n      \"type\": \"radio\",\r\n      \"options\": [\"Very Satisfied\", \"Satisfied\", \"Neutral\", \"Unsatisfied\"],\r\n      \"required\": true,\r\n      \"order\": 3\r\n    },\r\n    {\r\n      \"label\": \"Comments\",\r\n      \"key\": \"comments\",\r\n      \"type\": \"text\",\r\n      \"required\": false,\r\n      \"order\": 4\r\n    }\r\n  ]\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{url}}/api/v1/forms",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"forms"
+					],
+					"query": [
+						{
+							"key": "role",
+							"value": "user",
+							"disabled": true
+						},
+						{
+							"key": "role",
+							"value": "provider",
+							"disabled": true
+						},
+						{
+							"key": "role",
+							"value": "admin",
+							"disabled": true
+						},
+						{
+							"key": "role",
+							"value": "technician",
+							"disabled": true
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "PATCH Copy",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{accessToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "PATCH",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"id\": 5,\r\n  \"title\": \"Updated Employee Feedback\",\r\n  \"description\": \"Updated description\",\r\n  \"fields\": [\r\n    {\r\n      \"id\": 21,\r\n      \"label\": \"Employee Full Name\",\r\n      \"key\": \"employeeFullName\",\r\n      \"type\": \"text\",\r\n      \"required\": true,\r\n      \"order\": 1\r\n    },\r\n    {\r\n      \"id\" : 22,\r\n      \"label\": \"Department\",\r\n      \"key\": \"department\",\r\n      \"type\": \"select\",\r\n      \"options\": [\"IT\", \"HR\", \"Finance\", \"Marketing\"],\r\n      \"required\": true,\r\n      \"order\": 2\r\n    }\r\n  ]\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{url}}/api/v1/forms",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"forms"
+					],
+					"query": [
+						{
+							"key": "role",
+							"value": "user",
+							"disabled": true
+						},
+						{
+							"key": "role",
+							"value": "provider",
+							"disabled": true
+						},
+						{
+							"key": "role",
+							"value": "admin",
+							"disabled": true
+						},
+						{
+							"key": "role",
+							"value": "technician",
+							"disabled": true
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "GET Copy",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{accessToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{url}}/api/v1/forms",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"forms"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Active Form Copy",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{accessToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"url": {
+					"raw": "{{url}}/api/v1/forms/1/activate",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"forms",
+						"1",
+						"activate"
+					],
+					"query": [
+						{
+							"key": "limit",
+							"value": "1",
+							"disabled": true
+						},
+						{
+							"key": "page",
+							"value": "2",
+							"disabled": true
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "ReOrder Copy",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{accessToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "PATCH",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"fields\": [\r\n    { \"id\": 5, \"order\": 1 },\r\n    { \"id\": 3, \"order\": 2 },\r\n    { \"id\": 7, \"order\": 3 }\r\n  ]\r\n}\r\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{url}}/api/v1/forms/re-order",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"forms",
+						"re-order"
+					],
+					"query": [
+						{
+							"key": "limit",
+							"value": "1",
+							"disabled": true
+						},
+						{
+							"key": "page",
+							"value": "2",
+							"disabled": true
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "DEL Copy",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				},
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{accessToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "DELETE",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{url}}/api/v1/forms/1",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"forms",
+						"1"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "POST Copy",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{accessToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"fields\": [\r\n    {\r\n      \"label\": \"Email\",\r\n      \"key\": \"email\",\r\n      \"type\": \"text\",\r\n      \"required\": true,\r\n      \"order\": 1\r\n    },\r\n    {\r\n      \"label\": \"Phone\",\r\n      \"key\": \"phone\",\r\n      \"type\": \"number\",\r\n      \"required\": false,\r\n      \"order\": 2\r\n    }\r\n  ]\r\n}\r\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{url}}/api/v1/forms/4/fields",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"forms",
+						"4",
+						"fields"
+					],
+					"query": [
+						{
+							"key": "role",
+							"value": "user",
+							"disabled": true
+						},
+						{
+							"key": "role",
+							"value": "provider",
+							"disabled": true
+						},
+						{
+							"key": "role",
+							"value": "admin",
+							"disabled": true
+						},
+						{
+							"key": "role",
+							"value": "technician",
+							"disabled": true
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "DEL Copy",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				},
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{accessToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "DELETE",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{url}}/api/v1/forms/4/fields/25",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"forms",
+						"4",
+						"fields",
+						"25"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "POST Copy",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{accessToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"answers\": {\r\n    \"name\": \"John Doe\",\r\n    \"email\": \"john.doe@example.com\",\r\n    \"phone\": \"+123456789\",\r\n    \"age\": \"29\",\r\n    \"gender\": \"Male\",\r\n    \"country\": \"USA\",\r\n    \"city\": \"New York\",\r\n    \"occupation\": \"Software Engineer\",\r\n    \"experience\": \"5 years\",\r\n    \"satisfaction\": \"Very satisfied\",\r\n    \"feedback\": \"Great service and user-friendly platform.\",\r\n    \"subscribe\": \"Yes\",\r\n    \"preferred_contact\": \"Email\",\r\n    \"interests\": [\"Technology\", \"Fitness\", \"Travel\"],\r\n    \"newsletter_frequency\": \"Weekly\",\r\n    \"rating\": \"5\",\r\n    \"recommendation\": \"Absolutely\",\r\n    \"comments\": \"Looking forward to more features.\"\r\n  }\r\n}\r\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{url}}/api/v1/form-submissions",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"form-submissions"
+					],
+					"query": [
+						{
+							"key": "role",
+							"value": "user",
+							"disabled": true
+						},
+						{
+							"key": "role",
+							"value": "provider",
+							"disabled": true
+						},
+						{
+							"key": "role",
+							"value": "admin",
+							"disabled": true
+						},
+						{
+							"key": "role",
+							"value": "technician",
+							"disabled": true
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "GET Copy",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{accessToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{url}}/api/v1/form-submissions",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"form-submissions"
+					],
+					"query": [
+						{
+							"key": "limit",
+							"value": "1",
+							"disabled": true
+						},
+						{
+							"key": "page",
+							"value": "2",
+							"disabled": true
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "PATCH Copy",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{accessToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "PATCH",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"answers\": {\r\n    \"question1\": \"updated answer\",\r\n    \"question2\": \"another update\"\r\n  }\r\n}\r\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{url}}/api/v1/form-submissions/5",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"form-submissions",
+						"5"
+					],
+					"query": [
+						{
+							"key": "role",
+							"value": "user",
+							"disabled": true
+						},
+						{
+							"key": "role",
+							"value": "provider",
+							"disabled": true
+						},
+						{
+							"key": "role",
+							"value": "admin",
+							"disabled": true
+						},
+						{
+							"key": "role",
+							"value": "technician",
+							"disabled": true
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "DEL Copy",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				},
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{accessToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "DELETE",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{url}}/api/v1/form-submissions/4",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"form-submissions",
+						"4"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}

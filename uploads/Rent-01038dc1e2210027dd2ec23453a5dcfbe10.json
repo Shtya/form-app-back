@@ -1,0 +1,3502 @@
+{
+	"info": {
+		"_postman_id": "b463496e-feea-4e54-849f-2eff308fe46a",
+		"name": "Rent",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "23301799",
+		"_collection_link": "https://abdullah-7247.postman.co/workspace/venuat-backend-~8ad624ca-eb0e-4b15-8d41-df0b7fee001c/collection/23301799-b463496e-feea-4e54-849f-2eff308fe46a?action=share&source=collection_link&creator=23301799"
+	},
+	"item": [
+		{
+			"name": "Auth",
+			"item": [
+				{
+					"name": "Sign up",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"name\": \"Ahmed Test\",\r\n  \"email\": \"shtya54@gmail.com\",\r\n  \"password\": \"12345\",\r\n  \"phone\": \"+201551495772\",\r\n  \"role\": \"provider\"   // [ admin , provider , technician , user ]\r\n//   \"address\": {\r\n//     \"ar\": \"الرياض، المملكة العربية السعودية\",\r\n//     \"en\": \"Riyadh, Saudi Arabia\"\r\n//   },\r\n//   \"business_details\": {\r\n//     \"ar\": \"شركة وهمية لتقديم الخدمات\",\r\n//     \"en\": \"Fictional service provider company\"\r\n//   }\r\n}\r\n\r\n\r\n\r\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url}}/api/v1/auth/signup",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"auth",
+								"signup"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Sign in",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"let jsonData = pm.response.json();\r",
+									"pm.environment.set(\"accessToken\", jsonData.accessToken);\r",
+									"pm.environment.set(\"refreshToken\", jsonData.refreshToken);\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"email\": \"shtya54@gmail.com\",\r\n  \"password\": \"1234\"\r\n}\r\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url}}/api/v1/auth/signin",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"auth",
+								"signin"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Forget pass  -> ( 1 )",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"email\" : \"shtya54@gmail.com\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url}}/api/v1/auth/forgot-password",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"auth",
+								"forgot-password"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Verify OTP        -> ( 2 )",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"email\": \"shtya54@gmail.com\",\r\n  \"otp\": \"30693\"\r\n}\r\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url}}/api/v1/auth/verify-otp",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"auth",
+								"verify-otp"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Reset pass -> ( 3 )",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "// in case change with otp \r\n{\r\n  \"email\": \"shtya54@gmail.com\",\r\n  \"otp\": \"306938\",\r\n  \"newPassword\": \"1234\",\r\n  \"confirmPassword\": \"1234\"\r\n}\r\n\r\n\r\n// // in case change with current password \r\n// {\r\n//   \"email\": \"vendor@gmail.com\",\r\n//   \"currentPassword\": \"12345\",\r\n//   \"newPassword\": \"1234\",\r\n//   \"confirmPassword\": \"1234\"\r\n// }",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url}}/api/v1/auth/reset-password",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"auth",
+								"reset-password"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Refresh token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"let jsonData = pm.response.json();\r",
+									"pm.environment.set(\"accessToken\", jsonData.accessToken);"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"refreshToken\" : \"{{refreshToken}}\"\r\n\r\n\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url}}/api/v1/auth/refresh-token",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"auth",
+								"refresh-token"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Block Account",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PATCH",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url}}/api/v1/auth/toggle-block/5",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"auth",
+								"toggle-block",
+								"5"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Users",
+			"item": [
+				{
+					"name": "GET All",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/api/v1/users",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"users"
+							],
+							"query": [
+								{
+									"key": "role",
+									"value": "user",
+									"disabled": true
+								},
+								{
+									"key": "role",
+									"value": "provider",
+									"disabled": true
+								},
+								{
+									"key": "role",
+									"value": "admin",
+									"disabled": true
+								},
+								{
+									"key": "role",
+									"value": "technician",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GET One",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/api/v1/users/3",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"users",
+								"3"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GET Me",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url}}/api/v1/auth/profile",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"auth",
+								"profile"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PATCH",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "name",
+									"value": "Ahmed Test",
+									"type": "text"
+								},
+								{
+									"key": "phone",
+									"value": "+201551495772",
+									"type": "text"
+								},
+								{
+									"key": "address[ar]",
+									"value": "١٢ شارع النصر، القاهرة، مصر",
+									"type": "text"
+								},
+								{
+									"key": "address[en]",
+									"value": "12 Al-Nasr Street, Cairo, Egyp",
+									"type": "text"
+								},
+								{
+									"key": "business_details[ar]",
+									"value": "شركة تقدم خدمات البرمجة والتطوير",
+									"type": "text"
+								},
+								{
+									"key": "business_details[en]",
+									"value": "A company offering software development service",
+									"type": "text"
+								},
+								{
+									"key": "file",
+									"type": "file",
+									"src": "/D:/ENV/JOE13/JOE 13 Company/JOE 13 Website/public/assets/imgs/arrow2.png"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{url}}/api/v1/users/update-profile",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"users",
+								"update-profile"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "DEL",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url}}/api/v1/users/1",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"users",
+								"1"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Categories",
+			"item": [
+				{
+					"name": "GET",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/api/v1/categories",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"categories"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GET ONE",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/api/v1/categories/1",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"categories",
+								"1"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "POST",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "name[ar]",
+									"value": "مطاعم",
+									"type": "text"
+								},
+								{
+									"key": "name[en]",
+									"value": "Restaurants",
+									"type": "text"
+								},
+								{
+									"key": "file",
+									"type": "file",
+									"src": "/D:/ENV/JOE13/JOE 13 Company/JOE 13 Website/public/assets/imgs/blogs.png"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{url}}/api/v1/categories",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"categories"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PATCH",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "name[ar]",
+									"value": "sdfklsdfds",
+									"type": "text"
+								},
+								{
+									"key": "name[en]",
+									"value": "Restaurants",
+									"type": "text"
+								},
+								{
+									"key": "file",
+									"type": "file",
+									"src": "/D:/ENV/JOE13/JOE 13 Company/JOE 13 Website/public/assets/imgs/blogs.png"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{url}}/api/v1/categories/1",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"categories",
+								"1"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url}}/api/v1/categories/1",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"categories",
+								"1"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Sub Categories",
+			"item": [
+				{
+					"name": "GET",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/api/v1/sub-categories",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"sub-categories"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GET ONE",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/api/v1/sub-categories/1",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"sub-categories",
+								"1"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "POST",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "name[ar]",
+									"value": "مطاعم",
+									"type": "text"
+								},
+								{
+									"key": "name[en]",
+									"value": "Restaurants",
+									"type": "text"
+								},
+								{
+									"key": "file",
+									"type": "file",
+									"src": "/D:/ENV/JOE13/JOE 13 Company/JOE 13 Website/public/assets/imgs/arrow3.png"
+								},
+								{
+									"key": "categoryId",
+									"value": "1",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{url}}/api/v1/sub-categories",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"sub-categories"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PATCH",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "name[ar]",
+									"value": "sdfklsdfds",
+									"type": "text"
+								},
+								{
+									"key": "name[en]",
+									"value": "Restaurants",
+									"type": "text"
+								},
+								{
+									"key": "file",
+									"type": "file",
+									"src": "/D:/ENV/JOE13/JOE 13 Company/JOE 13 Website/public/assets/imgs/blogs.png"
+								},
+								{
+									"key": "categoryId",
+									"value": "2",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{url}}/api/v1/sub-categories/1",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"sub-categories",
+								"1"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url}}/api/v1/sub-categories/1",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"sub-categories",
+								"1"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Services || Products",
+			"item": [
+				{
+					"name": "Add Variant",
+					"item": [
+						{
+							"name": "POST",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "[\r\n  {\r\n    \"name\": \"Package Size\",\r\n    \"slug\": \"package-size2\",\r\n    \"type\": \"dropdown\",\r\n    \"required\": true,\r\n    \"options\": [\r\n      {\r\n        \"value\": \"Small\",\r\n        \"default\": true,\r\n        \"price\": 1500,\r\n        \"compared_price\": 1700,\r\n        \"image\": 2\r\n      },\r\n      {\r\n        \"value\": \"Medium\",\r\n        \"default\": false,\r\n        \"price\": 2000,\r\n        \"compared_price\": 2300,\r\n        \"image\": 1\r\n      },\r\n      {\r\n        \"value\": \"Large\",\r\n        \"default\": false,\r\n        \"price\": 3000,\r\n        \"compared_price\": 3500,\r\n        \"image\": 2\r\n      }\r\n    ]\r\n  }\r\n]\r\n",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{url}}/api/v1/services/19/variants",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"services",
+										"19",
+										"variants"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Update",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "PATCH",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"name\": \"Package Size\",\r\n  \"slug\": \"package-size\",\r\n  \"type\": \"dropdown\",\r\n  \"required\": true,\r\n  \"options\": [\r\n    {\r\n      \"value\": \"Small\",\r\n      \"default\": false,\r\n      \"price\": 1605,\r\n      \"compared_price\": 1800,\r\n      \"image\": 2\r\n    },\r\n    {\r\n      \"value\": \"Medium\",\r\n      \"default\": true,\r\n      \"price\": 2100,\r\n      \"compared_price\": 2400,\r\n      \"image\": 1\r\n    },\r\n    {\r\n      \"value\": \"Large\",\r\n      \"default\": false,\r\n      \"price\": 3100,\r\n      \"compared_price\": 3600,\r\n      \"image\": 2\r\n    }\r\n  ]\r\n}\r\n",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{url}}/api/v1/services/19/variants/package-size",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"services",
+										"19",
+										"variants",
+										"package-size"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "DEL",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "DELETE",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"name\": \"Package Size\",\r\n  \"slug\": \"package-size\",\r\n  \"type\": \"dropdown\",\r\n  \"required\": true,\r\n  \"options\": [\r\n    {\r\n      \"value\": \"Small\",\r\n      \"default\": false,\r\n      \"price\": 1600,\r\n      \"compared_price\": 1800,\r\n      \"image\": 20\r\n    },\r\n    {\r\n      \"value\": \"Medium\",\r\n      \"default\": true,\r\n      \"price\": 2100,\r\n      \"compared_price\": 2400,\r\n      \"image\": 21\r\n    },\r\n    {\r\n      \"value\": \"Large\",\r\n      \"default\": false,\r\n      \"price\": 3100,\r\n      \"compared_price\": 3600,\r\n      \"image\": 22\r\n    }\r\n  ]\r\n}\r\n",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{url}}/api/v1/services/19/variants/package-size2",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"services",
+										"19",
+										"variants",
+										"package-size2"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "GET",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/api/v1/services?type=service",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"services"
+							],
+							"query": [
+								{
+									"key": "type",
+									"value": "product",
+									"disabled": true
+								},
+								{
+									"key": "type",
+									"value": "service"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GET ONE",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/api/v1/services/19",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"services",
+								"19"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "POST",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"type\" : \"service\",  // is enum [ product , service ]\r\n  \"slug\": \"premium-wedding-package-3\",\r\n  \"providerId\": 2,\r\n  \"categoryId\": 3,\r\n  \"subCategory\": 7,\r\n  \"title\": {\r\n    \"ar\": \"حزمة زفاف مميزة\",\r\n    \"en\": \"Premium Wedding Package\"\r\n  },\r\n  \"description\": {\r\n    \"ar\": \"أفضل حزمة زفاف توفر كل الخدمات\",\r\n    \"en\": \"The best wedding package offering all services\"\r\n  },\r\n  \"main_image\": 1,\r\n  \"images\": [2, 1, 3],\r\n  \"price\": 5000,\r\n  \"discount_price\": 4500,\r\n  \"discount_start\": \"2025-06-01T00:00:00.000Z\",\r\n  \"discount_end\": \"2025-06-30T23:59:59.999Z\",\r\n  \"variants\": [\r\n    {\r\n      \"name\": \"Package Size\",\r\n      \"type\": \"dropdown\",\r\n      \"slug\" : \"package-size\",\r\n      \"required\": true,\r\n      \"options\": [\r\n        {\r\n          \"value\": \"Small\",\r\n          \"default\": true,\r\n          \"price\": 1500,\r\n          \"compared_price\": 1700,\r\n          \"image\": \"1\"\r\n        },\r\n        {\r\n          \"value\": \"Medium\",\r\n          \"default\": false,\r\n          \"price\": 2000,\r\n          \"compared_price\": 2300,\r\n          \"image\": \"2\"\r\n        },\r\n        {\r\n          \"value\": \"Large\",\r\n          \"default\": false,\r\n          \"price\": 3000,\r\n          \"compared_price\": 3500,\r\n          \"image\": \"3\"\r\n        }\r\n      ]\r\n    }\r\n  ],\r\n  \"attributes\": [\r\n    { \"key\": \"duration\", \"value\": \"3 hours\" },\r\n    { \"key\": \"location\", \"value\": \"Riyadh\" }\r\n  ],\r\n  \"address\": \"123 Wedding Street, Riyadh\",\r\n  // edit on the address to contain on ( address , country , city )\r\n  \"latitude\": 24.7136,\r\n  \"longitude\": 46.6753,\r\n  \"tags\": [\"wedding\", \"premium\", \"package\"],\r\n  \"duration_minutes\": 180,\r\n  \"cancellation_policy\": \"Full refund if canceled 7 days prior\",\r\n  \"requires_deposit\": true,\r\n  \"availability\": [\r\n    { \"day_of_week\": 5, \"from_time\": \"09:00\", \"to_time\": \"18:00\" },\r\n    { \"day_of_week\": 6, \"from_time\": \"10:00\", \"to_time\": \"16:00\" }\r\n  ]\r\n}\r\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url}}/api/v1/services",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"services"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PATCH",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"title\": {\r\n        \"ar\": \"حزمة زفاف محدثة\",\r\n        \"en\": \"Updated Wedding Package\"\r\n    },\r\n    \"price\": 5500,\r\n    \"discount_price\": 5000,\r\n    \"main_image\": 1,\r\n    \"images\": [\r\n        1,\r\n        2,\r\n        2\r\n    ],\r\n    \"variants\": [\r\n        {\r\n            \"name\": \"Package Size\",\r\n            \"type\": \"dropdown\",\r\n            \"required\" : true ,\r\n            \"options\": [\r\n                {\r\n                    \"image\": \"1\",\r\n                    \"price\": 1500,\r\n                    \"value\": \"Small\",\r\n                    \"default\": true,\r\n                    \"compared_price\": 1700\r\n                },\r\n                {\r\n                    \"image\": \"2\",\r\n                    \"price\": 1500,\r\n                    \"value\": \"Small\",\r\n                    \"default\": true,\r\n                    \"compared_price\": 1700\r\n                }\r\n            ]\r\n        }\r\n    ]\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url}}/api/v1/services/19",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"services",
+								"19"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url}}/api/v1/services/19",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"services",
+								"19"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Complaints",
+			"item": [
+				{
+					"name": "GET my Complaints",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/api/v1/complaints/my",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"complaints",
+								"my"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GET Complaints On Service",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/api/v1/complaints/11/serivce",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"complaints",
+								"11",
+								"serivce"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GET ONE",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/api/v1/complaints/4",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"complaints",
+								"4"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "POST",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"message\":  \"I have an issue with the service\",\r\n  \"serviceId\" : 11\r\n}\r\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url}}/api/v1/complaints",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"complaints"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "POST Reply",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"complaintId\": 4,\r\n  \"content\": \"Thanks for your message, we're working on it.\"\r\n}\r\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url}}/api/v1/complaints/reply",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"complaints",
+								"reply"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "chat",
+			"item": [
+				{
+					"name": "This is the all code for the integration",
+					"item": [],
+					"description": "```\n'use client';\nimport { useEffect, useState, useRef } from 'react';import { io } from 'socket.io-client';\nconst socket = io('http://localhost:8081');const currentUserId = 2;\nexport default function ChatPage() {    const [users, setUsers] = useState([]);    const [selectedUserId, setSelectedUserId] = useState(null);    const [messages, setMessages] = useState([]);    const [message, setMessage] = useState('');    const messagesEndRef = useRef(null);\n    const scrollToBottom = () => {        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });    };\n    useEffect(() => {        fetch(`http://localhost:8081/api/v1/chat/contacts/${currentUserId}`)            .then(res => res.json())            .then(data => setUsers(data));    }, []);\n    useEffect(() => {        if (!selectedUserId) return;        fetch(`http://localhost:8081/api/v1/chat/between/${currentUserId}/${selectedUserId}`)            .then(res => res.json())            .then(data => {                setMessages(data);                scrollToBottom();            });    }, [selectedUserId]);\n    useEffect(() => {        const handleReceive = msg => {            if (selectedUserId && ((msg.senderId === currentUserId && msg.receiverId === selectedUserId) || (msg.senderId === selectedUserId && msg.receiverId === currentUserId))) {                setMessages(prev => [...prev, msg]);                scrollToBottom();            }        };\n        socket.on('receive_message', handleReceive);        return () => socket.off('receive_message', handleReceive);    }, [selectedUserId]);\n    const sendMessage = () => {        if (!message.trim() || !selectedUserId) return;        const msg = { senderId: currentUserId, receiverId: selectedUserId, content: message };        socket.emit('send_message', msg);        setMessage('');    };\n    const handleKeyDown = e => {        if (e.key === 'Enter') {            e.preventDefault();            sendMessage();        }    };\n    return (                    {/* Contacts Sidebar */}                            Contacts                                    {users.map((user, i) => (                         setSelectedUserId(user.id)} className={`w-full text-left px-4 py-3 rounded-lg transition ${selectedUserId === user.id ? 'bg-blue-600 text-white' : 'bg-gray-700 hover:bg-gray-600'}`}>                            {user?.name}                            {user?.email}                                            ))}                            \n            {/* Chat Window */}                                                {messages.map((msg, idx) => {                        const isCurrentUser = msg.sender?.id === currentUserId || msg.senderId === currentUserId;                        return (                                                            {msg.content}                                {isCurrentUser ? 'You' : `User ${msg.sender?.id || msg.senderId}`}                                                    );                    })}                                    \n                {/* Message Input */}                                                             setMessage(e.target.value)} onKeyDown={handleKeyDown} className='flex-1 bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500' placeholder='Type your message...' />                                                    Send                                                                                    );}\n\n ```"
+				},
+				{
+					"name": "Create Msg",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"senderId\": 6,\r\n  \"receiverId\": 2,\r\n  \"content\": \"welcoem\"\r\n}\r\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url}}/api/v1/chat",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"chat"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Msgs for a User",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/api/v1/chat/user/4",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"chat",
+								"user",
+								"4"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Msgs Between Users",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/api/v1/chat/messages/2/4",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"chat",
+								"messages",
+								"2",
+								"4"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Banners",
+			"item": [
+				{
+					"name": "GET",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/api/v1/banners",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"banners"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GET ONE",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/api/v1/banners/1",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"banners",
+								"1"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "POST",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"title\": {\r\n    \"ar\": \"عرض الصيف\",\r\n    \"en\": \"Summer Sale\"\r\n  },\r\n  \"images\": [\r\n    \"https://example.com/images/banner1.jpg\",\r\n    \"https://example.com/images/banner2.jpg\"\r\n  ],\r\n  \"link\": \"https://example.com/summer-sale\",\r\n  \"is_active\": true,\r\n  \"start_date\": \"2025-06-01T00:00:00.000Z\",\r\n  \"end_date\": \"2025-07-01T00:00:00.000Z\"\r\n}\r\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url}}/api/v1/banners",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"banners"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PATCH",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"title\": {\r\n    \"ar\": \"عرض الصيف 2\",\r\n    \"en\": \"Summer Sale\"\r\n  },\r\n  \"images\": [\r\n    \"https://example.com/images/banner1.jpg\",\r\n    \"https://example.com/images/banner2.jpg\"\r\n  ],\r\n  \"link\": \"https://example.com/summer-sale\",\r\n  \"is_active\": true,\r\n  \"start_date\": \"2025-06-01T00:00:00.000Z\",\r\n  \"end_date\": \"2025-07-01T00:00:00.000Z\"\r\n}\r\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url}}/api/v1/banners/1",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"banners",
+								"1"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url}}/api/v1/banners/1",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"banners",
+								"1"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Reservation",
+			"item": [
+				{
+					"name": "GET",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/api/v1/reservations",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"reservations"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GET My Reservation",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/api/v1/reservations/my?status=confirmed",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"reservations",
+								"my"
+							],
+							"query": [
+								{
+									"key": "status",
+									"value": "pending",
+									"disabled": true
+								},
+								{
+									"key": "status",
+									"value": "confirmed"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GET ONE",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/api/v1/reservations/9",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"reservations",
+								"9"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "POST",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"serviceId\": 22,\r\n  \"addressId\": 2,\r\n  \"date\": \"2025-06-10\",\r\n  \"total_price\": 120.5,\r\n  \"payment_method\": \"cash\"\r\n}\r\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url}}/api/v1/reservations",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"reservations"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PATCH",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"userId\": 3,\r\n  \"serviceId\": 22,\r\n  \"addressId\": 2,\r\n  \"date\": \"2025-06-10\",\r\n  \"total_price\": 120.5,\r\n  \"payment_method\": \"cash\"\r\n}\r\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url}}/api/v1/reservations/1",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"reservations",
+								"1"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url}}/api/v1/reservations/1",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"reservations",
+								"1"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Address",
+			"item": [
+				{
+					"name": "GET My Addresses",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/api/v1/addresses/my",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"addresses",
+								"my"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GET ONE",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/api/v1/addresses/1",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"addresses",
+								"1"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "POST",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"apartment_number\": \"A12\",\r\n  \"building_name\": \"Sunset Tower\",\r\n  \"street_name\": \"Palm Street\",\r\n  \"additional_details\": \"Near the central park gate\",\r\n  \"address_type\": \"home\",\r\n  \"is_default\": true\r\n}\r\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url}}/api/v1/addresses",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"addresses"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"apartment_number\": \"A14\",\r\n  \"building_name\": \"Sunset Tower\",\r\n  \"street_name\": \"Palm Street\",\r\n  \"additional_details\": \"Near the central park gate\",\r\n  \"address_type\": \"home\",\r\n  \"is_default\": true\r\n}\r\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url}}/api/v1/addresses/1",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"addresses",
+								"1"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url}}/api/v1/addresses/1",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"addresses",
+								"1"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Favorite",
+			"item": [
+				{
+					"name": "GET My Favorites",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/api/v1/favorites/my",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"favorites",
+								"my"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "POST",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"serviceId\" : 13\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url}}/api/v1/favorites",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"favorites"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url}}/api/v1/favorites/2",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"favorites",
+								"2"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Settings",
+			"item": [
+				{
+					"name": "GET",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access-token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/api/v1/settings",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"settings"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "POST",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access-token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "slug",
+									"value": "settings4",
+									"type": "text"
+								},
+								{
+									"key": "site_name[en]",
+									"value": "My Website",
+									"type": "text"
+								},
+								{
+									"key": "site_name[ar]",
+									"value": "موقعي",
+									"type": "text"
+								},
+								{
+									"key": "site_logo_url",
+									"type": "file",
+									"src": "/D:/icons/6422215.png"
+								},
+								{
+									"key": "site_logo[alt]",
+									"value": "Logo of My Website",
+									"type": "text"
+								},
+								{
+									"key": "favicon_url",
+									"type": "file",
+									"src": "/D:/icons/6424087.png"
+								},
+								{
+									"key": "favicon[alt]",
+									"value": "Favicon of My Website",
+									"type": "text"
+								},
+								{
+									"key": "social_media[facebook]",
+									"value": "https://facebook.com/mywebsite",
+									"type": "text"
+								},
+								{
+									"key": "social_media[instagram]",
+									"value": "https://instagram.com/mywebsite",
+									"type": "text"
+								},
+								{
+									"key": "social_media[twitter]",
+									"value": "https://twitter.com/mywebsite",
+									"type": "text"
+								},
+								{
+									"key": "social_media[linkedin]",
+									"value": "https://linkedin.com/mywebsite",
+									"type": "text"
+								},
+								{
+									"key": "contact_us[address][en]",
+									"value": "123 Main St, City",
+									"type": "text"
+								},
+								{
+									"key": "contact_us[address][ar]",
+									"value": "123 الشارع الرئيسي، المدينة",
+									"type": "text"
+								},
+								{
+									"key": "contact_us[email]",
+									"value": "contact@mywebsite.com",
+									"type": "text"
+								},
+								{
+									"key": "contact_us[main_branch][ar]",
+									"value": "Downtown Branch",
+									"type": "text"
+								},
+								{
+									"key": "contact_us[main_branch][en]",
+									"value": "Downtown Branch",
+									"type": "text"
+								},
+								{
+									"key": "contact_us[phone]",
+									"value": "+1234567890",
+									"type": "text"
+								},
+								{
+									"key": "branch[en][0]",
+									"value": "Main",
+									"type": "text"
+								},
+								{
+									"key": "branch[en][1]",
+									"value": "Downtown",
+									"type": "text"
+								},
+								{
+									"key": "branch[en][2]",
+									"value": "East",
+									"type": "text"
+								},
+								{
+									"key": "branch[ar][0]",
+									"value": "الرئيسي",
+									"type": "text"
+								},
+								{
+									"key": "branch[ar][1]",
+									"value": "وسط المدينة",
+									"type": "text"
+								},
+								{
+									"key": "branch[ar][2]",
+									"value": "الشرق",
+									"type": "text"
+								},
+								{
+									"key": "meta[title]",
+									"value": "Best Website",
+									"type": "text"
+								},
+								{
+									"key": "meta[description]",
+									"value": "This is a demo site",
+									"type": "text"
+								},
+								{
+									"key": "meta[keywords][0]",
+									"value": "demo",
+									"type": "text"
+								},
+								{
+									"key": "meta[keywords][1]",
+									"value": "website",
+									"type": "text"
+								},
+								{
+									"key": "meta[keywords][2]",
+									"value": "nestjs",
+									"type": "text"
+								},
+								{
+									"key": "meta[custom_scripts][head]",
+									"value": "<script>console.log('head script')</script>",
+									"type": "text"
+								},
+								{
+									"key": "meta[custom_scripts][body]",
+									"value": "<script>console.log('body script')</script>",
+									"type": "text"
+								},
+								{
+									"key": "about_us_footer[en]",
+									"value": "About us English text",
+									"type": "text"
+								},
+								{
+									"key": "about_us_footer[ar]",
+									"value": "عنّا النص العربي",
+									"type": "text"
+								},
+								{
+									"key": "copyright[en]",
+									"value": "© 2024 My Website. All rights reserved.",
+									"type": "text"
+								},
+								{
+									"key": "copyright[ar]",
+									"value": "© ٢٠٢٤ موقعي. جميع الحقوق محفوظة.",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{url}}/api/v1/settings",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"settings"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "UPDATE",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access-token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PATCH",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "site_name[en]",
+									"value": "My Website",
+									"type": "text"
+								},
+								{
+									"key": "site_name[ar]",
+									"value": "موقعي",
+									"type": "text"
+								},
+								{
+									"key": "site_logo[alt]",
+									"value": "Logo of My Website",
+									"type": "text"
+								},
+								{
+									"key": "favicon[alt]",
+									"value": "Favicon of My Website",
+									"type": "text"
+								},
+								{
+									"key": "social_media[facebook]",
+									"value": "https://facebook.com/mywebsite",
+									"type": "text"
+								},
+								{
+									"key": "social_media[instagram]",
+									"value": "https://instagram.com/mywebsite",
+									"type": "text"
+								},
+								{
+									"key": "social_media[twitter]",
+									"value": "https://twitter.com/mywebsite",
+									"type": "text"
+								},
+								{
+									"key": "social_media[linkedin]",
+									"value": "https://linkedin.com/mywebsite",
+									"type": "text"
+								},
+								{
+									"key": "contact_us[address][en]",
+									"value": "123 Main St, City",
+									"type": "text"
+								},
+								{
+									"key": "contact_us[address][ar]",
+									"value": "123 الشارع الرئيسي، المدينة",
+									"type": "text"
+								},
+								{
+									"key": "contact_us[email]",
+									"value": "contact@mywebsite.com",
+									"type": "text"
+								},
+								{
+									"key": "contact_us[main_branch][ar]",
+									"value": "Downtown Branch",
+									"type": "text"
+								},
+								{
+									"key": "contact_us[main_branch][en]",
+									"value": "Downtown Branch",
+									"type": "text"
+								},
+								{
+									"key": "contact_us[phone]",
+									"value": "+1234567890",
+									"type": "text"
+								},
+								{
+									"key": "branch[en][0]",
+									"value": "Main",
+									"type": "text"
+								},
+								{
+									"key": "branch[en][1]",
+									"value": "Downtown",
+									"type": "text"
+								},
+								{
+									"key": "branch[en][2]",
+									"value": "East",
+									"type": "text"
+								},
+								{
+									"key": "branch[ar][0]",
+									"value": "الرئيسي",
+									"type": "text"
+								},
+								{
+									"key": "branch[ar][1]",
+									"value": "وسط المدينة",
+									"type": "text"
+								},
+								{
+									"key": "branch[ar][2]",
+									"value": "الشرق",
+									"type": "text"
+								},
+								{
+									"key": "meta[title]",
+									"value": "Best Website",
+									"type": "text"
+								},
+								{
+									"key": "meta[description]",
+									"value": "This is a demo site",
+									"type": "text"
+								},
+								{
+									"key": "meta[keywords][0]",
+									"value": "demo",
+									"type": "text"
+								},
+								{
+									"key": "meta[keywords][1]",
+									"value": "website",
+									"type": "text"
+								},
+								{
+									"key": "meta[keywords][2]",
+									"value": "nestjs",
+									"type": "text"
+								},
+								{
+									"key": "meta[custom_scripts][head]",
+									"value": "<script>console.log('head script')</script>",
+									"type": "text"
+								},
+								{
+									"key": "meta[custom_scripts][body]",
+									"value": "<script>console.log('body script')</script>",
+									"type": "text"
+								},
+								{
+									"key": "about_us_footer[en]",
+									"value": "About us English text",
+									"type": "text"
+								},
+								{
+									"key": "about_us_footer[ar]",
+									"value": "عنّا النص العربي",
+									"type": "text"
+								},
+								{
+									"key": "copyright[en]",
+									"value": "© 2024 My Website. All rights reserved.",
+									"type": "text"
+								},
+								{
+									"key": "copyright[ar]",
+									"value": "© ٢٠٢٤ موقعي. جميع الحقوق محفوظة.",
+									"type": "text"
+								},
+								{
+									"key": "site_logo_url",
+									"type": "file",
+									"src": "/D:/ENV/JOE13/Venuat Website/public/venues/2.png"
+								},
+								{
+									"key": "favicon_url",
+									"type": "file",
+									"src": "/D:/ENV/JOE13/Venuat Website/public/venues/7.png"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{url}}/api/v1/settings/5",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"settings",
+								"5"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access-token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"name\": \"Architecture 55\",\r\n  \"description\": \"Beautiful building designs\"\r\n}\r\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url}}/api/v1/settings/1",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"settings",
+								"1"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Contact us",
+			"item": [
+				{
+					"name": "GET",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/api/v1/contact-us",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"contact-us"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "POST",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"name\": \"John Doe\",\r\n  \"email\": \"johndoe@example.com\",\r\n  \"phone\": \"+1234567890\",\r\n  \"subject\": \"Need help with my account\",\r\n  \"message\": \"Hello, I’m having trouble accessing my account. Can you assist me?\"\r\n}\r\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url}}/api/v1/contact-us",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"contact-us"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "UPDATE",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PATCH",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"name\": \"John Doe\",\r\n  \"email\": \"johndoe@example.com\",\r\n  \"phone\": \"+1234567890\",\r\n  \"subject\": \"Need help with my account\",\r\n  \"message\": \"Hello, I’m having trouble accessing my account. Can you assist me?\"\r\n}\r\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url}}/api/v1/contact-us/2",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"contact-us",
+								"2"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url}}/api/v1/contact-us/2",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"contact-us",
+								"2"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Coupons",
+			"item": [
+				{
+					"name": "GET",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/api/v1/coupons",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"coupons"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "POST",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"code\": \"WELCOME10\",\r\n  \"usage_limit\": 3,\r\n  \"discount_type\": \"percentage\",\r\n  \"discount_value\": 10,\r\n  \"start_date\": \"2025-06-01T00:00:00Z\",\r\n  \"end_date\": \"2025-06-10T23:59:59Z\"\r\n}\r\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url}}/api/v1/coupons",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"coupons"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "UPDATE",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PATCH",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"code\": \"WELCOME10\",\r\n  \"usage_limit\": 100,\r\n  \"discount_type\": \"percentage\",\r\n  \"discount_value\": 10,\r\n  \"start_date\": \"2025-06-01T00:00:00Z\",\r\n  \"end_date\": \"2025-12-31T23:59:59Z\"\r\n}\r\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url}}/api/v1/coupons/1",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"coupons",
+								"1"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url}}/api/v1/coupons/1",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"coupons",
+								"1"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Loyalty",
+			"item": [
+				{
+					"name": "Rewards",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/api/v1/loyalty/rewards",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"loyalty",
+								"rewards"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Rewards",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"reward_name\": \"خصم 10% على الخدمات\",\r\n  \"required_points\": 100,\r\n  \"reward_description\": \"احصل على خصم 10% عند استبدال 100 نقطة\",\r\n  \"reward_type\": \"discount\",\r\n  \"reward_value\": \"10%\",\r\n  \"applies_to\": \"user\"\r\n}\r\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url}}/api/v1/loyalty/reward",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"loyalty",
+								"reward"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Rules",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"required_orders\": 5,\r\n  \"granted_points\": 10\r\n}\r\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url}}/api/v1/loyalty/rules",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"loyalty",
+								"rules"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Rules",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"required_orders\": 5,\r\n  \"granted_points\": 10\r\n}\r\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url}}/api/v1/loyalty/rule",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"loyalty",
+								"rule"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "UPDATE",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PATCH",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"code\": \"WELCOME10\",\r\n  \"usage_limit\": 100,\r\n  \"discount_type\": \"percentage\",\r\n  \"discount_value\": 10,\r\n  \"start_date\": \"2025-06-01T00:00:00Z\",\r\n  \"end_date\": \"2025-12-31T23:59:59Z\"\r\n}\r\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url}}/api/v1/coupons/1",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"coupons",
+								"1"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url}}/api/v1/coupons/1",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"coupons",
+								"1"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Images",
+			"item": [
+				{
+					"name": "GET",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access-token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/api/v1/images",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"images"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "POST",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "alt[0]",
+									"value": "alt image 1",
+									"type": "text"
+								},
+								{
+									"key": "alt[1]",
+									"value": "alt image 2",
+									"type": "text"
+								},
+								{
+									"key": "files",
+									"type": "file",
+									"src": "/D:/ENV/JOE13/JOE 13 Company/JOE 13 Website/public/assets/imgs/bullets.png"
+								},
+								{
+									"key": "files",
+									"type": "file",
+									"src": "/D:/ENV/JOE13/JOE 13 Company/JOE 13 Website/public/assets/imgs/bullets.png"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{url}}/api/v1/images",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"images"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access-token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"name\": \"Architecture 55\",\r\n  \"description\": \"Beautiful building designs\"\r\n}\r\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url}}/api/v1/images/9",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"images",
+								"9"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "url",
+			"value": "",
+			"type": "default"
+		}
+	]
+}
