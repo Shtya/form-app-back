@@ -1,5 +1,4 @@
-import { User } from 'entities/user.entity';
-import {
+ import {
   Entity,
   PrimaryGeneratedColumn,
   Column,
@@ -7,6 +6,7 @@ import {
   UpdateDateColumn,
   ManyToOne,
 } from 'typeorm';
+import { User } from './user.entity';
 
 
 @Entity('assets')

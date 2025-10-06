@@ -45,8 +45,8 @@ export class AuthController {
   @Post('verify-user/:id')
   async verifyAndGetUserCredentials(@Param('id') id: string, @Req() req: any) {
     return this.authService.verifyAndGetUserCredentials(
-      req.user.id, // The authenticated admin's ID from JWT
-      parseInt(id), // The target user ID
+      req.user.id,
+      parseInt(id),
     );
   }
 }
