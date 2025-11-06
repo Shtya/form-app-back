@@ -17,6 +17,7 @@ import { FormModule } from './form/form.module';
 import { FormSubmissionModule } from './form-submission/form-submission.module';
 import { AssetModule } from './asset/asset.module';
 import { ProjectsModule } from './project/project.module';
+import { CheckoutsModule } from './checkout/checkout.module';
 
 
 @Module({
@@ -52,7 +53,8 @@ import { ProjectsModule } from './project/project.module';
     FormModule,
     FormSubmissionModule,
     AssetModule,
-    ProjectsModule
+    ProjectsModule,
+		CheckoutsModule
   ],
   controllers: [AppController],
   providers: [AppService, LoggingValidationPipe , QueryFailedErrorFilter ],
