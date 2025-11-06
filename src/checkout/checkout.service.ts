@@ -1,3 +1,4 @@
+// --- File: checkout\checkout.service.ts ---
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, FindOptionsWhere } from 'typeorm';
@@ -14,7 +15,15 @@ export class CheckoutsService {
   async create(dto: CreateCheckoutDto): Promise<Checkout> {
     // Normalize digits on phone (in case client missed it)
     dto.phone = dto.phone.replace(/\D/g, '');
-    const entity:any = this.repo.create({...dto} as any)
+    
+    // Generate tracking ID
+    const trackingId = this.generateTrackingId();
+    
+    const entity:any = this.repo.create({
+      ...dto,
+      trackingId
+    } as any);
+    
     return this.repo.save(entity);
   }
 
@@ -34,6 +43,12 @@ export class CheckoutsService {
     return row;
   }
 
+  async findByTrackingId(trackingId: string): Promise<Checkout> {
+    const row = await this.repo.findOne({ where: { trackingId } });
+    if (!row) throw new NotFoundException('Checkout not found with this tracking ID');
+    return row;
+  }
+
   async update(id: string, dto: UpdateCheckoutDto): Promise<Checkout> {
     const row = await this.findOne(id);
     Object.assign(row, dto);
@@ -50,5 +65,11 @@ export class CheckoutsService {
   async remove(id: string): Promise<void> {
     const row = await this.findOne(id);
     await this.repo.remove(row);
+  }
+
+  private generateTrackingId(): string {
+    const timestamp = Date.now().toString(36).toUpperCase();
+    const random = Math.random().toString(36).substring(2, 8).toUpperCase();
+    return `TRK-${timestamp}-${random}`;
   }
 }

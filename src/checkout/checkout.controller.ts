@@ -1,3 +1,4 @@
+// --- File: checkout\checkout.controller.ts ---
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UploadedFile, UseInterceptors, BadRequestException, Req } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { CheckoutsService } from './checkout.service';
@@ -24,7 +25,6 @@ export class CheckoutsController {
     }
 
     // Build a stable URL or store relative path
-    // If you serve /uploads statically, a relative path is enough
     const relativePath = file.path.replace(process.cwd(), '').replace(/\\/g, '/');
     const proofUrl = relativePath.startsWith('/') ? relativePath : `/${relativePath}`;
 
@@ -38,17 +38,29 @@ export class CheckoutsController {
       body.agreed = ['true', '1', 'on', 'yes'].includes((body as any).agreed.toLowerCase());
     }
 
-    return this.service.create(body);
+    const checkout = await this.service.create(body);
+    
+    // Return checkout with tracking ID for customer reference
+    return {
+      ...checkout,
+      message: `Checkout created successfully. Your tracking ID is: ${checkout.trackingId}. Please save this number to contact support.`
+    };
   }
 
   @Get()
   async findAll(@Query('') query: any) {
-    return CRUD.findAll(this.service.repo, 'p', query.search, query.page, query.limit, query.sortBy, query.sortOrder ?? 'DESC', [], ['weekOf'], query.filters);
+    return CRUD.findAll(this.service.repo, 'p', query.search, query.page, query.limit, query.sortBy, query.sortOrder ?? 'DESC', [], ['trackingId', "name", "phone",,'email'], query.filters);
   }
 
   @Get(':id')
   async findOne(@Param('id') id: string) {
     return this.service.findOne(id);
+  }
+
+  // New endpoint to find checkout by tracking ID
+  @Get('tracking/:trackingId')
+  async findByTrackingId(@Param('trackingId') trackingId: string) {
+    return this.service.findByTrackingId(trackingId);
   }
 
   @Patch(':id')

@@ -1,3 +1,4 @@
+// --- File: checkout\checkout.entity.ts ---
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, Index, BeforeInsert, BeforeUpdate } from 'typeorm';
 
 export enum CheckoutStatus {
@@ -8,9 +9,13 @@ export enum CheckoutStatus {
 
 @Entity({ name: 'checkouts' })
 @Index('idx_checkouts_phone_pair', ['countryCode', 'phone'])
+@Index('idx_checkouts_tracking_id', ['trackingId']) // Add index for tracking ID
 export class Checkout {
   @PrimaryGeneratedColumn('uuid')
   id: string;
+
+  @Column({ type: 'varchar', length: 20, unique: true , nullable : true })
+  trackingId: string; 
 
   @Column({ type: 'varchar', length: 80 })
   name: string;
@@ -48,4 +53,17 @@ export class Checkout {
 
   @UpdateDateColumn({ type: 'timestamptz' })
   updated_at: Date;
+
+  @BeforeInsert()
+  generateTrackingId() {
+    if (!this.trackingId) {
+      this.trackingId = this.generateUniqueTrackingId();
+    }
+  }
+
+  private generateUniqueTrackingId(): string {
+    const timestamp = Date.now().toString(36).toUpperCase();
+    const random = Math.random().toString(36).substring(2, 8).toUpperCase();
+    return `TRK-${timestamp}-${random}`;
+  }
 }
