@@ -8,45 +8,48 @@ import { Roles } from './roles.decorator';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+	constructor(private readonly authService: AuthService) { }
 
-  @Post('signin')
-  async signin(@Body() body: { email: string; password: string }) {
-    return this.authService.signin(body.email, body.password);
-  }
 
-  @UseGuards(AuthGuard, RolesGuard)
-  @Roles(UserRole.ADMIN)
-  @Post('create-user')
-  async createUser(@Body() dto: CreateUserDto) {
-    return this.authService.createUser(dto);
-  }
+	@Post('signin')
+	async signin(@Body() body: { email: string; password: string }) {
+		return this.authService.signin(body.email, body.password);
+	}
 
-  @UseGuards(AuthGuard, RolesGuard)
-  @Roles(UserRole.ADMIN)
-  @Post('create-users-bulk')
-  async createUsersBulk(@Body() dto: any) {
-    return this.authService.createUsersBulk(dto.users);
-  }
+	// EDIT the create-user endpoint:
+	@UseGuards(AuthGuard, RolesGuard)
+	@Post('create-user')
+	async createUser(@Body() dto: CreateUserDto, @Req() req: any) {
+		const currentUser = req.user; // Get who is creating the user
+		return this.authService.createUser(dto, currentUser);
+	}
 
-  @Post('refresh-token')
-  async refreshToken(@Body() body: { refreshToken: string }) {
-    return this.authService.refreshAccessToken(body.refreshToken);
-  }
+	// EDIT the bulk create endpoint:
+	@UseGuards(AuthGuard, RolesGuard)
+	@Post('create-users-bulk')
+	async createUsersBulk(@Body() dto: any, @Req() req: any) {
+		const currentUser = req.user; // Get who is creating users
+		return this.authService.createUsersBulk(dto.users, currentUser);
+	}
 
-  @UseGuards(AuthGuard)
-  @Get('profile')
-  async getProfile(@Req() req: any) {
-    return this.authService.getMe(req.user.id);
-  }
+	@Post('refresh-token')
+	async refreshToken(@Body() body: { refreshToken: string }) {
+		return this.authService.refreshAccessToken(body.refreshToken);
+	}
 
-  @UseGuards(AuthGuard, RolesGuard)
-  @Roles(UserRole.ADMIN)
-  @Post('verify-user/:id')
-  async verifyAndGetUserCredentials(@Param('id') id: string, @Req() req: any) {
-    return this.authService.verifyAndGetUserCredentials(
-      req.user.id,
-      parseInt(id),
-    );
-  }
+	@UseGuards(AuthGuard)
+	@Get('profile')
+	async getProfile(@Req() req: any) {
+		return this.authService.getMe(req.user.id);
+	}
+
+	@UseGuards(AuthGuard, RolesGuard)
+
+	@Post('verify-user/:id')
+	async verifyAndGetUserCredentials(@Param('id') id: string, @Req() req: any) {
+		return this.authService.verifyAndGetUserCredentials(
+			req.user.id,
+			parseInt(id),
+		);
+	}
 }
