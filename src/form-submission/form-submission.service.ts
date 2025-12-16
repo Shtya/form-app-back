@@ -187,12 +187,23 @@ private mapFormToEmployee(dto: CreateFormSubmissionDto, user: User): Record<stri
 
 }
 
+async findAllForAdmin(page = 1, limit = 10, form_id?: string, project_id?: string) {
+  const query = this.submissionRepo
+    .createQueryBuilder('submission')
+    .leftJoinAndSelect('submission.user', 'user')
+    .leftJoinAndSelect('user.project', 'project')
+    .leftJoin('form', 'form', 'CAST(form.id AS TEXT) = submission.form_id') // FIX: Cast to text
+    .where('form.adminId IS NULL')
+    .orderBy('submission.created_at', 'DESC')
+    .skip((page - 1) * limit)
+    .take(limit);
 
-  async findAllByUser(userId: number) {
-    return this.submissionRepo.find({
-      where: { user: { id: userId } },
-      order: { created_at: 'DESC' },
-    });
+  if (form_id) {
+    query.andWhere('submission.form_id = :form_id', { form_id });
+  }
+
+  if (project_id) {
+    query.andWhere('project.id = :project_id', { project_id: +project_id });
   }
 
   const [data, total] = await query.getManyAndCount();
@@ -204,7 +215,6 @@ private mapFormToEmployee(dto: CreateFormSubmissionDto, user: User): Record<stri
     lastPage: Math.ceil(total / limit),
   };
 }
-
 // EDIT the findAllForSupervisor method - same fix:
 async findAllForSupervisor(page = 1, limit = 10, supervisorId: number, form_id?: string, project_id?: string) {
   const query = this.submissionRepo
