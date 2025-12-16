@@ -7,13 +7,14 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { CreateProjectDto, UpdateProjectDto } from 'dto/project.dto';
 import { Project } from 'entities/project.entity';
 import { IsNull, Repository } from 'typeorm';
-import { UserRole } from '../../entities/user.entity';
+import { User, UserRole } from '../../entities/user.entity';
 
 @Injectable()
 export class ProjectsService {
 	constructor(
 		@InjectRepository(Project)
 		private readonly projectRepository: Repository<Project>,
+		@InjectRepository(User) private readonly userRepo: Repository<User>,
 	) { }
 
 
@@ -50,16 +51,17 @@ export class ProjectsService {
 
 	async findAll(page = 1, limit = 10, user?: any) {
 		let whereCondition: any = { deleted_at: null };
+		const userData = await this.userRepo.findOne({where : {id : user?.id }})
+ 
 
 		if (user.role === UserRole.SUPERVISOR) {
 			whereCondition = {
 				...whereCondition,
-				adminId: user.id
+				id: userData?.project?.id
 			};
 		} else if (user.role === UserRole.ADMIN) {
 			whereCondition = {
-				...whereCondition,
-				adminId: IsNull()
+				...whereCondition, 
 			};
 		}
 
