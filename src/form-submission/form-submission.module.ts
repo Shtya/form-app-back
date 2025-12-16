@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { HttpModule } from '@nestjs/axios';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { FormSubmission } from 'entities/form-submissions.entity';
 import { User } from 'entities/user.entity';
@@ -8,7 +9,7 @@ import { JwtService } from '@nestjs/jwt';
 import { Form } from '../../entities/forms.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([FormSubmission, User, Form])],
+  imports: [TypeOrmModule.forFeature([FormSubmission, User]),HttpModule],
   providers: [FormSubmissionService , JwtService],
   controllers: [FormSubmissionController],
 })
