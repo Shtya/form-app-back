@@ -9,7 +9,7 @@ import { JwtService } from '@nestjs/jwt';
 import { Form } from '../../entities/forms.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([FormSubmission, User]),HttpModule],
+  imports: [TypeOrmModule.forFeature([FormSubmission, User,Form]),HttpModule],
   providers: [FormSubmissionService , JwtService],
   controllers: [FormSubmissionController],
 })
