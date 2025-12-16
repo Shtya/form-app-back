@@ -1,30 +1,33 @@
 import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  OneToMany,
-  CreateDateColumn,
+	Entity,
+	PrimaryGeneratedColumn,
+	Column,
+	OneToMany,
+	CreateDateColumn,
 } from 'typeorm';
 import { FormField } from './form-field.entity';
 import { FormSubmission } from './form-submissions.entity';
 
 @Entity()
 export class Form {
-  @PrimaryGeneratedColumn()
-  id: number;
+	@PrimaryGeneratedColumn()
+	id: number;
 
-  @Column()
-  title: string;
+	@Column()
+	title: string;
 
-  @Column({ default: false }) // 👈 isActive column
-  isActive: boolean;
-  
-  @Column({ nullable: true })
-  description: string;
+	@Column({ default: false }) // 👈 isActive column
+	isActive: boolean;
 
-  @OneToMany(() => FormField, (field) => field.form, { cascade: true })
-  fields: FormField[];
+	@Column({ nullable: true })
+	description: string;
 
-  @CreateDateColumn()
-  created_at: Date;
+	@OneToMany(() => FormField, (field) => field.form, { cascade: true })
+	fields: FormField[];
+
+	@Column({nullable : true})
+	adminId: number;
+
+	@CreateDateColumn()
+	created_at: Date;
 }

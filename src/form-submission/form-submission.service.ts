@@ -195,55 +195,102 @@ private mapFormToEmployee(dto: CreateFormSubmissionDto, user: User): Record<stri
     });
   }
 
-  async deleteSubmission(id: number) {
-    const found = await this.submissionRepo.findOne({ where: { id } });
-    if (!found) throw new NotFoundException('Submission not found');
+  const [data, total] = await query.getManyAndCount();
 
-    return this.submissionRepo.remove(found);
+  return {
+    data,
+    total,
+    page,
+    lastPage: Math.ceil(total / limit),
+  };
+}
+
+// EDIT the findAllForSupervisor method - same fix:
+async findAllForSupervisor(page = 1, limit = 10, supervisorId: number, form_id?: string, project_id?: string) {
+  const query = this.submissionRepo
+    .createQueryBuilder('submission')
+    .leftJoinAndSelect('submission.user', 'user')
+    .leftJoinAndSelect('user.project', 'project')
+    .leftJoin('form', 'form', 'CAST(form.id AS TEXT) = submission.form_id') // FIX: Cast to text
+    .where('form.adminId = :supervisorId', { supervisorId })
+    .orderBy('submission.created_at', 'DESC')
+    .skip((page - 1) * limit)
+    .take(limit);
+
+  if (form_id) {
+    query.andWhere('submission.form_id = :form_id', { form_id });
   }
 
-  async findAll(page = 1, limit = 10, form_id?: string, project_id?: string) {
-    const query = this.submissionRepo
-      .createQueryBuilder('submission')
-      .leftJoinAndSelect('submission.user', 'user')
-      .leftJoinAndSelect('user.project', 'project')
-      .orderBy('submission.created_at', 'DESC')
-      .skip((page - 1) * limit)
-      .take(limit);
-
-    if (form_id) {
-      query.andWhere('submission.form_id = :form_id', { form_id });
-    }
-
-    if (project_id) {
-      query.andWhere('project.id = :project_id', { project_id: +project_id });
-    }
-
-    const [data, total] = await query.getManyAndCount();
-
-    return {
-      data,
-      total,
-      page,
-      lastPage: Math.ceil(total / limit),
-    };
+  if (project_id) {
+    query.andWhere('project.id = :project_id', { project_id: +project_id });
   }
 
-  async update(id: number, dto: any) {
-    const submission = await this.submissionRepo.findOne({ where: { id }, relations: ['user'] });
+  const [data, total] = await query.getManyAndCount();
 
-    if (!submission) {
-      throw new NotFoundException('Submission not found');
-    }
+  return {
+    data,
+    total,
+    page,
+    lastPage: Math.ceil(total / limit),
+  };
+}
 
-    Object.assign(submission, dto);
-    return this.submissionRepo.save(submission);
-  }
+	async findAllByUser(userId: number) {
+		return this.submissionRepo.find({
+			where: { user: { id: userId } },
+			order: { created_at: 'DESC' },
+		});
+	}
 
-  findOne(id: number) {
-    return this.submissionRepo.findOne({
-      where: { id },
-      relations: ['user'],
-    });
-  }
+	async deleteSubmission(id: number) {
+		const found = await this.submissionRepo.findOne({ where: { id } });
+		if (!found) throw new NotFoundException('Submission not found');
+
+		return this.submissionRepo.remove(found);
+	}
+
+	async findAll(page = 1, limit = 10, form_id?: string, project_id?: string) {
+		const query = this.submissionRepo
+			.createQueryBuilder('submission')
+			.leftJoinAndSelect('submission.user', 'user')
+			.leftJoinAndSelect('user.project', 'project')
+			.orderBy('submission.created_at', 'DESC')
+			.skip((page - 1) * limit)
+			.take(limit);
+
+		if (form_id) {
+			query.andWhere('submission.form_id = :form_id', { form_id });
+		}
+
+		if (project_id) {
+			query.andWhere('project.id = :project_id', { project_id: +project_id });
+		}
+
+		const [data, total] = await query.getManyAndCount();
+
+		return {
+			data,
+			total,
+			page,
+			lastPage: Math.ceil(total / limit),
+		};
+	}
+
+	async update(id: number, dto: any) {
+		const submission = await this.submissionRepo.findOne({ where: { id }, relations: ['user'] });
+
+		if (!submission) {
+			throw new NotFoundException('Submission not found');
+		}
+
+		Object.assign(submission, dto);
+		return this.submissionRepo.save(submission);
+	}
+
+	findOne(id: number) {
+		return this.submissionRepo.findOne({
+			where: { id },
+			relations: ['user'],
+		});
+	}
 }

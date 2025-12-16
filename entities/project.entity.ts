@@ -1,31 +1,34 @@
 import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  OneToMany,
-  CreateDateColumn,
-  UpdateDateColumn,
-  DeleteDateColumn,
+	Entity,
+	PrimaryGeneratedColumn,
+	Column,
+	OneToMany,
+	CreateDateColumn,
+	UpdateDateColumn,
+	DeleteDateColumn,
 } from 'typeorm';
 import { User } from './user.entity';
 
 @Entity()
 export class Project {
-  @PrimaryGeneratedColumn()
-  id: number;
+	@PrimaryGeneratedColumn()
+	id: number;
 
-  @Column()
-  name: string;
+	@Column()
+	name: string;
 
-  @OneToMany(() => User, (user) => user.project)
-  users: User[];
+	@Column({ nullable: true }) // Make it nullable
+	adminId: number | null; // Update type
 
-  @CreateDateColumn()
-  created_at: Date;
+	@OneToMany(() => User, (user) => user.project)
+	users: User[];
 
-  @UpdateDateColumn()
-  updated_at: Date;
+	@CreateDateColumn()
+	created_at: Date;
 
-   @DeleteDateColumn() // ✅ حذف ناعم
-  deleted_at: Date;
+	@UpdateDateColumn()
+	updated_at: Date;
+
+	@DeleteDateColumn() // ✅ حذف ناعم
+	deleted_at: Date;
 }
