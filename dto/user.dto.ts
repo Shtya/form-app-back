@@ -57,6 +57,10 @@ export class CreateUserBulkDto {
   @IsNotEmpty({ message: 'Project name is required' })
   @IsString()
   projectName: string;
+
+  @IsOptional()
+  @IsString()
+  formId?: string;
 }
 
 export class UpdateUserDto extends PartialType(CreateUserDto) {}
