@@ -5,6 +5,7 @@
   CreateDateColumn,
   UpdateDateColumn,
   ManyToOne,
+	DeleteDateColumn,
 } from 'typeorm';
 import { User } from './user.entity';
 
@@ -40,4 +41,7 @@ export class Asset {
 
   @UpdateDateColumn()
   updated_at: Date;
+
+	@DeleteDateColumn()
+  deleted_at: Date;
 }

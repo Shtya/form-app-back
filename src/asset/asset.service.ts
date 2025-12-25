@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, Query, Req } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Asset } from 'entities/assets.entity';
 import { Repository } from 'typeorm';
@@ -9,106 +9,128 @@ import { BaseService } from 'common/base.service';
 
 @Injectable()
 export class AssetService extends BaseService<Asset> {
-  constructor(
-    @InjectRepository(Asset) private assetRepo: Repository<Asset>,
-  ) {
-    super(assetRepo)
-  }
+	constructor(
+		@InjectRepository(Asset) private assetRepo: Repository<Asset>,
+	) {
+		super(assetRepo)
+	}
 
 
 
-extractTypeFromMime(mime: string): string {
-  if (!mime) return 'unknown';
+	extractTypeFromMime(mime: string): string {
+		if (!mime) return 'unknown';
 
-  if (mime.startsWith('image/')) return 'image';
-  if (mime.startsWith('video/')) return 'video';
-  if (mime.startsWith('audio/')) return 'audio';
+		if (mime.startsWith('image/')) return 'image';
+		if (mime.startsWith('video/')) return 'video';
+		if (mime.startsWith('audio/')) return 'audio';
 
-  if (
-    mime === 'application/pdf' ||
-    mime === 'application/msword' ||
-    mime.startsWith('application/vnd') || // Word, Excel, PPT
-    mime === 'text/plain' ||
-    mime.startsWith('application/x-') // e.g., x-compressed, x-zip-compressed
-  ) return 'document';
+		if (
+			mime === 'application/pdf' ||
+			mime === 'application/msword' ||
+			mime.startsWith('application/vnd') || // Word, Excel, PPT
+			mime === 'text/plain' ||
+			mime.startsWith('application/x-') // e.g., x-compressed, x-zip-compressed
+		) return 'document';
 
-  if (
-    mime === 'application/zip' ||
-    mime === 'application/x-7z-compressed' ||
-    mime === 'application/x-rar-compressed'
-  ) return 'archive';
+		if (
+			mime === 'application/zip' ||
+			mime === 'application/x-7z-compressed' ||
+			mime === 'application/x-rar-compressed'
+		) return 'archive';
 
-  if (
-    mime.startsWith('application/json') ||
-    mime === 'application/xml' ||
-    mime.startsWith('text/') 
-  ) return 'code';
+		if (
+			mime.startsWith('application/json') ||
+			mime === 'application/xml' ||
+			mime.startsWith('text/')
+		) return 'code';
 
-  return 'binary';
-}
-
-
-
-async Create(dto: CreateAssetDto, file: any, user: User) {
-  const inferredType = this.extractTypeFromMime(file.mimetype);
-
-  const asset = this.assetRepo.create({
-    filename: dto.filename ?? file.originalname,
-    url: file.path,
-    type: dto.type ?? inferredType,
-    category: dto.category ?? inferredType,
-    mimeType: file.mimetype,
-    size: file.size,
-    user,
-  });
-
-  return this.assetRepo.save(asset);
-}
+		return 'binary';
+	}
 
 
-  async update(id: string, dto: UpdateAssetDto, file?: any) {
-    const asset = await this.assetRepo.findOne({ where: { id } });
-    if (!asset) throw new NotFoundException('Asset not found');
 
-    if (file) {
-      try {
-        fs.unlinkSync(asset.url);
-      } catch (err) {
-        console.warn('Old file not found in system:', err.message);
-      }
+	async Create(dto: CreateAssetDto, file: any, user: User) {
+		const inferredType = this.extractTypeFromMime(file.mimetype);
 
-      asset.url = file.path;
-      asset.mimeType = file.mimetype;
-      asset.size = file.size;
-      asset.filename = file.originalname;
-    }
+		const asset = this.assetRepo.create({
+			filename: dto.filename ?? file.originalname,
+			url: file.path,
+			type: dto.type ?? inferredType,
+			category: dto.category ?? inferredType,
+			mimeType: file.mimetype,
+			size: file.size,
+			user,
+		});
 
-    asset.category = dto.category ?? asset.category;
-    asset.type = dto.type ?? asset.type;
+		return this.assetRepo.save(asset);
+	}
 
-    return this.assetRepo.save(asset);
-  }
 
-  async delete(id: string) {
-    const asset = await this.assetRepo.findOne({ where: { id } });
-    if (!asset) throw new NotFoundException('Asset not found');
+	async update(id: string, dto: UpdateAssetDto, file?: any) {
+		const asset = await this.assetRepo.findOne({ where: { id } });
+		if (!asset) throw new NotFoundException('Asset not found');
 
-    try {
-      fs.unlinkSync(asset.url);
-    } catch (err) {
-      console.warn('File not found in system:', err.message);
-    }
+		if (file) {
+			try {
+				fs.unlinkSync(asset.url);
+			} catch (err) {
+				console.warn('Old file not found in system:', err.message);
+			}
 
-    return this.assetRepo.remove(asset);
-  }
+			asset.url = file.path;
+			asset.mimeType = file.mimetype;
+			asset.size = file.size;
+			asset.filename = file.originalname;
+		}
 
-  async findAllByUser(userId: any) {
-    return this.assetRepo.find({ where: { user: { id: userId } }, order: { created_at: 'DESC' } });
-  }
+		asset.category = dto.category ?? asset.category;
+		asset.type = dto.type ?? asset.type;
 
-  async findOne(id: string) {
-    const asset = await this.assetRepo.findOne({ where: { id } });
-    if (!asset) throw new NotFoundException('Asset not found');
-    return asset;
-  }
+		return this.assetRepo.save(asset);
+	}
+
+	async findAllByUser(userId: any) {
+		return this.assetRepo.find({ where: { user: { id: userId } }, order: { created_at: 'DESC' } });
+	}
+
+	async findOne(id: string) {
+		const asset = await this.assetRepo.findOne({ where: { id } });
+		if (!asset) throw new NotFoundException('Asset not found');
+		return asset;
+	}
+
+
+
+
+
+	async delete(id: string) {
+		const asset = await this.assetRepo.findOne({ where: { id } });
+		if (!asset) throw new NotFoundException('Asset not found');
+
+		// Soft delete - just mark as deleted without removing file
+		return this.assetRepo.softRemove(asset);
+	}
+
+	// For permanent deletion (if needed)
+	async permanentDelete(id: string) {
+		const asset = await this.assetRepo.findOne({ where: { id }, withDeleted: true });
+		if (!asset) throw new NotFoundException('Asset not found');
+
+		try {
+			fs.unlinkSync(asset.url);
+		} catch (err) {
+			console.warn('File not found in system:', err.message);
+		}
+
+		return this.assetRepo.remove(asset);
+	}
+
+	// Restore soft deleted asset
+	async restore(id: string) {
+		const result = await this.assetRepo.restore(id);
+		if (result.affected === 0) {
+			throw new NotFoundException('Asset not found or already restored');
+		}
+		return this.assetRepo.findOne({ where: { id } });
+	}
 }
