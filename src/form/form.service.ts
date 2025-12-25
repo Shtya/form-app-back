@@ -146,28 +146,28 @@ export class FormService {
 		};
 	}
 
-async getAllForms(page = 1, limit = 10) {
-  // Convert to numbers to avoid TypeORM error
-  const pageNum = Number(page);
-  const limitNum = Number(limit);
-  
-  const [results, total] = await this.formRepository.findAndCount({
-    where: { adminId: IsNull() }, // Only forms where adminId IS NULL
-    relations: ['fields'],
-    skip: (pageNum - 1) * limitNum,
-    take: limitNum,
-    order: {
-      created_at: 'DESC',
-    },
-  });
+	async getAllForms(page = 1, limit = 10) {
+		// Convert to numbers to avoid TypeORM error
+		const pageNum = Number(page);
+		const limitNum = Number(limit);
 
-  return {
-    data: results,
-    total,
-    page: pageNum,
-    last_page: Math.ceil(total / limitNum),
-  };
-}
+		const [results, total] = await this.formRepository.findAndCount({
+			where: { adminId: IsNull() }, // Only forms where adminId IS NULL
+			relations: ['fields'],
+			skip: (pageNum - 1) * limitNum,
+			take: limitNum,
+			order: {
+				created_at: 'DESC',
+			},
+		});
+
+		return {
+			data: results,
+			total,
+			page: pageNum,
+			last_page: Math.ceil(total / limitNum),
+		};
+	}
 
 	async getAllFormsSuperVisor(page = 1, limit = 10, adminId?: number) {
 		// Convert page and limit to numbers
@@ -224,21 +224,22 @@ async getAllForms(page = 1, limit = 10) {
 	// form.service.ts
 
 	async addFieldsToForm(formId: number, dto: any) {
-		const form = await this.formRepository.findOne({ where: { id: formId } });
+ 		const form = await this.formRepository.findOne({ where: { id: formId } });
 		if (!form) throw new NotFoundException('Form not found');
 
-		const fields = dto.fields.map(field => {
-			return this.fieldRepository.create({
+		const fields = dto.fields.map((field, index) =>
+			this.fieldRepository.create({
 				label: field.label,
 				key: field.key,
 				type: field.type,
 				placeholder: field.placeholder,
 				required: field.required,
 				options: field.options,
-				order: field.order,
+				order: field.order ?? index,
 				form,
-			});
-		});
+			}),
+		);
+
 
 		return this.fieldRepository.save(fields); // حفظهم دفعة واحدة
 	}
