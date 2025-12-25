@@ -60,4 +60,13 @@ getAll(@Req() req: any, @Query('page') page = '1', @Query('limit') limit = '10' 
 
     return this.submissionService.deleteSubmission(+id);
   }
+
+  @Post('bulk-upload')
+  async bulkUpload(@Req() req: any, @Body() body: { submissions: Array<{ userId: number; answers: Record<string, any>; form_id: string }> }) {
+    const user = req.user;
+    if (user.role !== 'admin' && user.role !== 'supervisor') {
+      throw new ForbiddenException('Only admins and supervisors can bulk upload submissions');
+    }
+    return this.submissionService.bulkCreateSubmissions(body.submissions);
+  }
 }
