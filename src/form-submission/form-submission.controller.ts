@@ -1,3 +1,5 @@
+// form-submission.controller.ts
+
 import { Controller, Post, Body, Get, Delete, Param, UseGuards, Req, ForbiddenException, Query, Patch } from '@nestjs/common';
 import { FormSubmissionService } from './form-submission.service';
 import { CreateFormSubmissionDto } from 'dto/form-submission.dto';
@@ -14,21 +16,18 @@ export class FormSubmissionController {
     return this.submissionService.create(userId, dto);
   }
 
-// TO THIS:
-@Get()
-getAll(@Req() req: any, @Query('page') page = '1', @Query('limit') limit = '10' , @Query('form_id')  form_id?: string, @Query('project_id')  project_id?: string) {
-  const user = req.user;
-  
-  if (user.role === 'admin') {
-    // Admin sees submissions from forms with adminId = null
-    return this.submissionService.findAllForAdmin(+page, +limit, form_id, project_id);
-  } else if (user.role === 'supervisor') {
-    // Supervisor sees submissions from their forms (forms with adminId = supervisor's id)
-    return this.submissionService.findAllForSupervisor(+page, +limit, user.id, form_id, project_id);
-  } else {
-    return this.submissionService.findAllByUser(user.id); // Regular user sees only their own
+  @Get()
+  getAll(@Req() req: any, @Query('page') page = '1', @Query('limit') limit = '10', @Query('form_id') form_id?: string, @Query('project_id') project_id?: string) {
+    const user = req.user;
+
+    if (user.role === 'admin') {
+      return this.submissionService.findAllForAdmin(+page, +limit, form_id, project_id);
+    } else if (user.role === 'supervisor') {
+      return this.submissionService.findAllForSupervisor(+page, +limit, user.id, form_id, project_id);
+    } else {
+      return this.submissionService.findAllByUser(user.id);
+    }
   }
-}
 
   @Patch(':id')
   async update(@Req() req: any, @Param('id') id: string, @Body() dto: any) {
@@ -53,11 +52,57 @@ getAll(@Req() req: any, @Query('page') page = '1', @Query('limit') limit = '10' 
 
     if (!submission) {
       throw new ForbiddenException('Submission not found');
-    } 
+    }
+
     if (user.role !== 'admin' && submission.user.id !== user.id) {
       throw new ForbiddenException('You do not have permission to delete this submission');
     }
 
     return this.submissionService.deleteSubmission(+id);
   }
+
+  // Add endpoint to sync submission with employee
+  @Post(':id/sync-employee/:employeeId')
+  @UseGuards(AuthGuard)
+  async syncEmployee(
+    @Req() req: any,
+    @Param('id') id: string,
+    @Param('employeeId') employeeId: string
+  ) {
+    const user = req.user;
+    const submission = await this.submissionService.findOne(+id);
+
+    if (!submission) {
+      throw new ForbiddenException('Submission not found');
+    }
+
+    if (user.role !== 'admin' && submission.user.id !== user.id) {
+      throw new ForbiddenException('You do not have permission to sync this submission');
+    }
+
+    return this.submissionService.syncSubmissionWithEmployee(+id, employeeId);
+  }
+
+  // Get submission by employee ID
+  @Get('by-employee/:employeeId')
+  @UseGuards(AuthGuard)
+  async getByEmployeeId(
+    @Req() req: any,
+    @Param('employeeId') employeeId: string
+  ) {
+    const user = req.user;
+    const submission = await this.submissionService.findByEmployeeId(employeeId);
+
+    if (!submission) {
+      throw new ForbiddenException('Submission not found');
+    }
+
+    if (user.role !== 'admin' && submission.user.id !== user.id) {
+      throw new ForbiddenException('You do not have permission to view this submission');
+    }
+
+    return submission;
+  }
+
+
 }

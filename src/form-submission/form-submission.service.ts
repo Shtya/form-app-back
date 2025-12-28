@@ -21,7 +21,7 @@ export class FormSubmissionService {
   ) {}
 
 
-  async create(userId: number, dto: CreateFormSubmissionDto) {
+async create(userId: number, dto: CreateFormSubmissionDto) {
     const user = await this.userRepo.findOne({ where: { id: userId } });
     if (!user) throw new NotFoundException('User not found');
 
@@ -43,20 +43,30 @@ export class FormSubmissionService {
 
     // --- CALL EMPLOYEE SERVICE ---
     try {
+      console.log(dto);
       const employeePayload = this.mapFormToEmployee(dto, user);
+      console.log(`employeePayload ${JSON.stringify(employeePayload)}`);
+
+      // Store employee ID in submission for future updates
       const response = await firstValueFrom(
         this.httpService.post(
           `${process.env.NEST_PUBLIC_BASE_URL_2}/employees/from-data`,
           employeePayload,
           {
             headers: {
-              'Authorization': `Bearer ${process.env.TOKENJWT_SECRET}`, // service token
+              'Authorization': `Bearer ${process.env.TOKENJWT_SECRET}`,
               'Content-Type': 'application/json',
             },
           },
         ),
       );
-      // Optionally handle response
+
+      // Store employee ID in submission
+      if (response.data?.success && response.data?.data?.employee?.id) {
+        savedSubmission.employeeId = response.data.data.employee.id;
+        await this.submissionRepo.save(savedSubmission);
+      }
+
       console.log('Employee created in Project A:', response.data);
     } catch (error) {
       console.error('Failed to create employee in Project A:', error.response?.data || error.message);
@@ -68,125 +78,97 @@ export class FormSubmissionService {
 
 private mapFormToEmployee(dto: CreateFormSubmissionDto, user: User): Record<string, any> {
   const answers = dto.answers;
+  const employeeData: Record<string, any> = {};
 
-  const employeeData: Record<string, any> = {
-    // ======= PERSONAL INFORMATION =======
-    employeeName: answers['employeeName'] || answers['fullName'] || answers['name'] || answers['اسم_الموظف'],
-    fullName: answers['fullName'] || answers['employeeName'] || answers['name'] || answers['اسم_الموظف'],
-    name: answers['name'] || answers['fullName'] || answers['employeeName'] || answers['اسم_الموظف'],
-    اسم_الموظف: answers['اسم_الموظف'] || answers['fullName'] || answers['employeeName'],
-
-    nationality: answers['nationality'] || answers['الجنسية'],
-    الجنسية: answers['الجنسية'] || answers['nationality'],
-
-    idNumber: answers['idNumber'] || answers['رقم_الهوية'],
-    رقم_الهوية: answers['رقم_الهوية'] || answers['idNumber'],
-
-    email: answers['email'] || answers['البريد_الإلكتروني'],
-    البريد_الإلكتروني: answers['البريد_الإلكتروني'] || answers['email'],
-
-    birthDate: answers['birthDate'] || answers['تاريخ_الميلاد'],
-    تاريخ_الميلاد: answers['تاريخ_الميلاد'] || answers['birthDate'],
-
-    mobileNumber: answers['mobileNumber'] || answers['رقم_الجوال'],
-    رقم_الجوال: answers['رقم_الجوال'] || answers['mobileNumber'],
-
-    // ======= EMPLOYMENT INFORMATION =======
-    jobTitle: answers['jobTitle'] || answers['المسمى_الوظيفي'],
-    المسمى_الوظيفي: answers['المسمى_الوظيفي'] || answers['jobTitle'],
-
-    department: answers['department'] || answers['القسم'],
-    القسم: answers['القسم'] || answers['department'],
-
-    joiningDate: answers['joiningDate'] || answers['تاريخ_الالتحاق'],
-    تاريخ_الالتحاق: answers['تاريخ_الالتحاق'] || answers['joiningDate'],
-
-    workLocation: answers['workLocation'],
-    contractType: answers['contractType'],
-    salaryType: answers['salaryType'],
-    Age : answers['age'] || answers['العمر'],
-    // ======= SALARY/BANKING INFORMATION =======
-    salary: answers['salary'],
-    bankIban: answers['bankIban'] || answers['رقم_الايبان'],
-    رقم_الايبان: answers['رقم_الايبان'] || answers['bankIban'],
-
-    bankName: answers['bankName'] || answers['اسم_البنك'],
-    اسم_البنك: answers['اسم_البنك'] || answers['bankName'],
-
-    // ======= ADDITIONAL INFORMATION =======
-    projectName: user.project?.name || answers['projectName'] || answers['اسم_المشروع'],
-    اسم_المشروع: answers['اسم_المشروع'] || user.project?.name,
-
-    specialization: answers['specialization'] || answers['التخصص'],
-    التخصص: answers['التخصص'] || answers['specialization'],
-
-    idExpiryDate: answers['idExpiryDate'] || answers['تاريخ_انتهاء_الهوية'],
-    تاريخ_انتهاء_الهوية: answers['تاريخ_انتهاء_الهوية'] || answers['idExpiryDate'],
-
-    address: answers['address'] || answers['العنوان'],
-    العنوان: answers['العنوان'] || answers['address'],
-
-    city: answers['city'] || answers['المدينة'],
-    المدينة: answers['المدينة'] || answers['city'],
-
-    religion: answers['religion'] || answers['الديانة'],
-    الديانة: answers['الديانة'] || answers['religion'],
-
-    maritalStatus: answers['maritalStatus'] || answers['الحالة_الاجتماعية'],
-    الحالة_الاجتماعية: answers['الحالة_الاجتماعية'] || answers['maritalStatus'],
-
-    degree: answers['degree'] || answers['المؤهل'],
-    المؤهل: answers['المؤهل'] || answers['degree'],
-
-    gender: answers['gender'] || answers['الجنس'],
-    الجنس: answers['الجنس'] || answers['gender'],
-
-    emergencyContactName: answers['emergencyContactName'],
-    emergencyContactPhone: answers['emergencyContactPhone'],
-    emergencyContactRelationship: answers['emergencyContactRelationship'],
-
-    workSchedule: answers['workSchedule'],
-    workHoursDaily: answers['workHoursDaily'],
-    contractStatus: answers['contractStatus'],
-    notes: answers['notes'] || answers['ملاحظات'],
-    ملاحظات: answers['ملاحظات'] || answers['notes'],
-  };
-    const imageMappings = {
-    IDDocumentUrl: ['idDocument', 'idDocument_asset'],
-    PassportPhotoCopyUrl: ['passport-photo-copy', 'passportPhotoCopy_asset'],
-    CVUrl: ['السيرة-الذاتية-', 'السيرة_الذاتية_asset'],
-    DegreeCertificateUrl: ['الشهادة-العلمية-', 'الشهادة_العلمية_asset'],
-    IBANCertificateUrl: ['شهادة-الايبان-البنكي', 'شهادة_الايبان_البنكي_asset'],
-    NationalAddressUrl: ['العنوان-الوطني---national-address', 'nationalAddress_asset']
-  };
-    Object.entries(imageMappings).forEach(([entityField, inputFields]) => {
-    for (const field of inputFields) {
-      if (answers[field]) {
-        employeeData[field] = answers[field];
-        break;
-      }
-    }
+  // ======= COPY ALL FIELDS DIRECTLY =======
+  // This ensures ALL fields from the form are included
+  Object.keys(answers).forEach(key => {
+    employeeData[key] = answers[key];
   });
 
-  // Handle additional documents
-  const allAnswers = Object.entries(answers);
-  const documentAssets = allAnswers
-    .filter(([key, value]) => key.includes('_asset') && value && typeof value === 'object')
-    .map(([key, value]) => value);
+  // ======= ADD SPECIFIC FIELD MAPPINGS =======
+  // Personal Information
+  employeeData.employeeName = answers['employeeName'] || answers['fullName'] || answers['name'] || answers['اسم_الموظف'];
+  employeeData.fullName = answers['fullName'] || answers['employeeName'] || answers['name'] || answers['اسم_الموظف'];
+  employeeData.name = answers['name'] || answers['fullName'] || answers['employeeName'] || answers['اسم_الموظف'];
+  employeeData.اسم_الموظف = answers['اسم_الموظف'] || answers['fullName'] || answers['employeeName'];
 
-  if (documentAssets.length > 0) {
-    employeeData.additionalDocuments = documentAssets;
-  }
+  // CRITICAL: Age field - use lowercase 'age' from form
+  employeeData.Age = answers['age'] || answers['Age'] || answers['العمر'];
+  employeeData.age = answers['age'] || answers['Age'] || answers['العمر'];
+  employeeData.العمر = answers['العمر'] || answers['age'] || answers['Age'];
 
-  // Add project information if available
-  if (user.project) {
-    employeeData.projectName = user.project.name;
-  }
+  // Passport fields from your form
+  employeeData.passportNumber = answers['passportNumber'];
+  employeeData.passportIssueDate = answers['passportIssueDate'];
+  employeeData.passportExpiryDate = answers['passportExpiryDate'];
+  employeeData.birthPlace = answers['birthPlace'];
+  employeeData.idIssuePlace = answers['idIssuePlace'];
+
+  // Other fields
+  employeeData.nationality = answers['nationality'] || answers['الجنسية'];
+  employeeData.الجنسية = answers['الجنسية'] || answers['nationality'];
+
+  employeeData.idNumber = answers['idNumber'] || answers['رقم_الهوية'];
+  employeeData.رقم_الهوية = answers['رقم_الهوية'] || answers['idNumber'];
+
+  employeeData.email = answers['email'] || answers['البريد_الإلكتروني'];
+  employeeData.البريد_الإلكتروني = answers['البريد_الإلكتروني'] || answers['email'];
+
+  employeeData.birthDate = answers['birthDate'] || answers['تاريخ_الميلاد'];
+  employeeData.تاريخ_الميلاد = answers['تاريخ_الميلاد'] || answers['birthDate'];
+
+  employeeData.mobileNumber = answers['mobileNumber'] || answers['رقم_الجوال'] || answers['رقم-الهاتف'];
+  employeeData.رقم_الجوال = answers['رقم_الجوال'] || answers['mobileNumber'] || answers['رقم-الهاتف'];
+
+  // Employment Information
+  employeeData.joiningDate = answers['joiningDate'] || answers['تاريخ_الالتحاق'];
+  employeeData.تاريخ_الالتحاق = answers['تاريخ_الالتحاق'] || answers['joiningDate'];
+
+  // Banking
+  employeeData.bankIban = answers['bankIban'] || answers['رقم_الايبان'];
+  employeeData.رقم_الايبان = answers['رقم_الايبان'] || answers['bankIban'];
+
+  employeeData.bankName = answers['bankName'] || answers['اسم_البنك'];
+  employeeData.اسم_البنك = answers['اسم_البنك'] || answers['bankName'];
+
+  // Additional Information
+  employeeData.projectName = user.project?.name || answers['projectName'] || answers['اسم_المشروع'];
+  employeeData.اسم_المشروع = answers['اسم_المشروع'] || user.project?.name;
+
+  employeeData.specialization = answers['specialization'] || answers['التخصص'];
+  employeeData.التخصص = answers['التخصص'] || answers['specialization'];
+
+  employeeData.idExpiryDate = answers['idExpiryDate'] || answers['تاريخ_انتهاء_الهوية'];
+  employeeData.تاريخ_انتهاء_الهوية = answers['تاريخ_انتهاء_الهوية'] || answers['idExpiryDate'];
+
+  employeeData.address = answers['address'] || answers['العنوان'];
+  employeeData.العنوان = answers['العنوان'] || answers['address'];
+
+  employeeData.city = answers['city'] || answers['المدينة'];
+  employeeData.المدينة = answers['المدينة'] || answers['city'];
+
+  employeeData.religion = answers['religion'] || answers['الديانة'];
+  employeeData.الديانة = answers['الديانة'] || answers['religion'];
+
+  employeeData.maritalStatus = answers['maritalStatus'] || answers['الحالة_الاجتماعية'];
+  employeeData.الحالة_الاجتماعية = answers['الحالة_الاجتماعية'] || answers['maritalStatus'];
+
+  employeeData.degree = answers['degree'] || answers['المؤهل'];
+  employeeData.المؤهل = answers['المؤهل'] || answers['degree'];
+
+  employeeData.gender = answers['gender'] || answers['الجنس'];
+  employeeData.الجنس = answers['الجنس'] || answers['gender'];
+
+  // Document fields (with dashes)
+  employeeData['passport-photo-copy'] = answers['passport-photo-copy'];
+  employeeData['السيرة-الذاتية-'] = answers['السيرة-الذاتية-'];
+  employeeData['الشهادة-العلمية-'] = answers['الشهادة-العلمية-'];
+  employeeData['شهادة-الايبان-البنكي'] = answers['شهادة-الايبان-البنكي'];
+  employeeData['العنوان-الوطني---national-address'] = answers['العنوان-الوطني---national-address'];
 
   return employeeData;
-
 }
-
 async findAllForAdmin(page = 1, limit = 10, form_id?: string, project_id?: string) {
   const query = this.submissionRepo
     .createQueryBuilder('submission')
@@ -252,12 +234,57 @@ async findAllForSupervisor(page = 1, limit = 10, supervisorId: number, form_id?:
 		});
 	}
 
-	async deleteSubmission(id: number) {
-		const found = await this.submissionRepo.findOne({ where: { id } });
-		if (!found) throw new NotFoundException('Submission not found');
+  async deleteSubmission(id: number) {
+    const found = await this.submissionRepo.findOne({
+      where: { id }
+    });
 
-		return this.submissionRepo.remove(found);
-	}
+    if (!found) throw new NotFoundException('Submission not found');
+
+    // --- DELETE EMPLOYEE IF EXISTS ---
+    if (found.employeeId) {
+      try {
+        await firstValueFrom(
+          this.httpService.delete(
+            `${process.env.NEST_PUBLIC_BASE_URL_2}/employees/${found.employeeId}`,
+            {
+              headers: {
+                'Authorization': `Bearer ${process.env.TOKENJWT_SECRET}`,
+              },
+            },
+          ),
+        );
+
+        console.log(`Employee ${found.employeeId} deleted in Project A`);
+      } catch (error) {
+        console.error('Failed to delete employee in Project A:', error.response?.data || error.message);
+        // You can decide to fail silently or throw
+      }
+    }
+
+    return this.submissionRepo.remove(found);
+  }
+
+    async syncSubmissionWithEmployee(submissionId: number, employeeId: string) {
+    const submission = await this.submissionRepo.findOne({
+      where: { id: submissionId }
+    });
+
+    if (!submission) {
+      throw new NotFoundException('Submission not found');
+    }
+
+    submission.employeeId = employeeId;
+    return this.submissionRepo.save(submission);
+  }
+
+  // Get submission by employee ID
+  async findByEmployeeId(employeeId: string) {
+    return this.submissionRepo.findOne({
+      where: { employeeId },
+      relations: ['user'],
+    });
+  }
 
 	async findAll(page = 1, limit = 10, form_id?: string, project_id?: string) {
 		const query = this.submissionRepo
@@ -286,16 +313,51 @@ async findAllForSupervisor(page = 1, limit = 10, supervisorId: number, form_id?:
 		};
 	}
 
-	async update(id: number, dto: any) {
-		const submission = await this.submissionRepo.findOne({ where: { id }, relations: ['user'] });
+  async update(id: number, dto: any) {
+    const submission = await this.submissionRepo.findOne({
+      where: { id },
+      relations: ['user']
+    });
 
-		if (!submission) {
-			throw new NotFoundException('Submission not found');
-		}
+    if (!submission) {
+      throw new NotFoundException('Submission not found');
+    }
 
-		Object.assign(submission, dto);
-		return this.submissionRepo.save(submission);
-	}
+    Object.assign(submission, dto);
+    const updatedSubmission = await this.submissionRepo.save(submission);
+
+    // --- UPDATE EMPLOYEE IF EXISTS ---
+    if (submission.employeeId) {
+      try {
+        const user = submission.user;
+        const employeePayload = this.mapFormToEmployee(
+          { answers: submission.answers, form_id: submission.form_id } as CreateFormSubmissionDto,
+          user
+        );
+
+        const response = await firstValueFrom(
+          this.httpService.patch(
+            `${process.env.NEST_PUBLIC_BASE_URL_2}/employees/${submission.employeeId}`,
+            employeePayload,
+            {
+              headers: {
+                'Authorization': `Bearer ${process.env.TOKENJWT_SECRET}`,
+                'Content-Type': 'application/json',
+              },
+            },
+          ),
+        );
+
+        console.log('Employee updated in Project A:', response.data);
+      } catch (error) {
+        console.error('Failed to update employee in Project A:', error.response?.data || error.message);
+        // You can decide to fail silently or throw
+      }
+    }
+
+    return updatedSubmission;
+  }
+
 
 	findOne(id: number) {
 		return this.submissionRepo.findOne({

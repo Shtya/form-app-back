@@ -18,7 +18,8 @@ export class FormSubmission {
 
   @Column({default : 0 , nullable : true})
   form_id : string ;
-
+@Column({ type: 'varchar', length: 36, nullable: true })
+  employeeId: string;
   @CreateDateColumn()
   created_at: Date;
 }
