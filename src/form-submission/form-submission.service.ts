@@ -167,65 +167,121 @@ private mapFormToEmployee(dto: CreateFormSubmissionDto, user: User): Record<stri
   employeeData['شهادة-الايبان-البنكي'] = answers['شهادة-الايبان-البنكي'];
   employeeData['العنوان-الوطني---national-address'] = answers['العنوان-الوطني---national-address'];
 
-  return employeeData;
-}
-async findAllForAdmin(page = 1, limit = 10, form_id?: string, project_id?: string) {
-  const query = this.submissionRepo
-    .createQueryBuilder('submission')
-    .leftJoinAndSelect('submission.user', 'user')
-    .leftJoinAndSelect('user.project', 'project')
-    .leftJoin('form', 'form', 'CAST(form.id AS TEXT) = submission.form_id') // FIX: Cast to text
-    .where('form.adminId IS NULL')
-    .orderBy('submission.created_at', 'DESC')
-    .skip((page - 1) * limit)
-    .take(limit);
+		@InjectRepository(Form) // ADD this line
+		private formRepo: Repository<Form>,
+	) { }
 
-  if (form_id) {
-    query.andWhere('submission.form_id = :form_id', { form_id });
-  }
+	async create(userId: number, dto: CreateFormSubmissionDto) {
+		const user = await this.userRepo.findOne({ where: { id: userId } });
+		if (!user) throw new NotFoundException('User not found');
 
-  if (project_id) {
-    query.andWhere('project.id = :project_id', { project_id: +project_id });
-  }
+		// التحقق إذا كان المستخدم قد أرسل بالفعل
+		const existing = await this.submissionRepo.findOne({
+			where: { user: { id: userId } },
+		});
 
-  const [data, total] = await query.getManyAndCount();
+		if (existing) {
+			throw new BadRequestException('You have already submitted this form.');
+		}
 
-  return {
-    data,
-    total,
-    page,
-    lastPage: Math.ceil(total / limit),
-  };
-}
-// EDIT the findAllForSupervisor method - same fix:
-async findAllForSupervisor(page = 1, limit = 10, supervisorId: number, form_id?: string, project_id?: string) {
-  const query = this.submissionRepo
-    .createQueryBuilder('submission')
-    .leftJoinAndSelect('submission.user', 'user')
-    .leftJoinAndSelect('user.project', 'project')
-    .leftJoin('form', 'form', 'CAST(form.id AS TEXT) = submission.form_id') // FIX: Cast to text
-    .where('form.adminId = :supervisorId', { supervisorId })
-    .orderBy('submission.created_at', 'DESC')
-    .skip((page - 1) * limit)
-    .take(limit);
+		const submission = this.submissionRepo.create({
+			user,
+			answers: dto.answers,
+			form_id: dto.form_id,
+		});
 
-  if (form_id) {
-    query.andWhere('submission.form_id = :form_id', { form_id });
-  }
+		return this.submissionRepo.save(submission);
+	}
 
-  if (project_id) {
-    query.andWhere('project.id = :project_id', { project_id: +project_id });
-  }
 
-  const [data, total] = await query.getManyAndCount();
+	// EDIT the findAllForAdmin method - change the join:
+	// async findAllForAdmin(page = 1, limit = 10, form_id?: string, project_id?: string) {
+	// 	const query = this.submissionRepo
+	// 		.createQueryBuilder('submission')
+	// 		.leftJoinAndSelect('submission.user', 'user')
+	// 		.leftJoinAndSelect('user.project', 'project')
+	// 		.leftJoinAndSelect('submission.form', 'form')   // ✅ الأفضل لو relation موجود
+	// 		.where('form.adminId IS NULL')
+	// 		.orderBy('submission.created_at', 'DESC')
+	// 		.skip((page - 1) * limit)
+	// 		.take(limit);
 
-  return {
-    data,
-    total,
-    page,
-    lastPage: Math.ceil(total / limit),
-  };
-}
+	// 	if (form_id) query.andWhere('submission.form_id = :form_id', { form_id });
+
+	// 	if (project_id) query.andWhere('project.id = :project_id', { project_id: +project_id });
+
+	// 	const [data, total] = await query.getManyAndCount();
+	// 	return { data, total, page, lastPage: Math.ceil(total / limit) };
+	// }
+
+	async findAllForAdmin(page = 1, limit = 10, form_id?: string, project_id?: string) {
+		// const query = this.submissionRepo
+		// 	.createQueryBuilder('submission')
+		// 	.leftJoinAndSelect('submission.user', 'user')
+		// 	.leftJoinAndSelect('user.project', 'project')
+		// 	.leftJoin('form', 'form', 'CAST(form.id AS TEXT) = submission.form_id') // FIX: Cast to text
+		// 	.where('form.adminId IS NULL')
+		// 	.orderBy('submission.created_at', 'DESC')
+		// 	.skip((page - 1) * limit)
+		// 	.take(limit);
+		const query = this.submissionRepo
+			.createQueryBuilder('submission')
+			.leftJoinAndSelect('submission.user', 'user')
+			.leftJoinAndSelect('user.project', 'project')
+			// لو عايز كمان ترجع بيانات الفورم نفسها (اختياري)
+			.leftJoin('form', 'form', 'CAST(form.id AS TEXT) = submission.form_id')
+			.addSelect(['form.id', 'form.adminId']) // أو addSelect('form') لو انت محتاج كل الأعمدة
+			.orderBy('submission.created_at', 'DESC')
+			.skip((page - 1) * limit)
+			.take(limit);
+
+		if (form_id) {
+			query.andWhere('submission.form_id = :form_id', { form_id });
+		}
+
+		if (project_id) {
+			query.andWhere('project.id = :project_id', { project_id: +project_id });
+		}
+
+		const [data, total] = await query.getManyAndCount();
+
+		return {
+			data,
+			total,
+			page,
+			lastPage: Math.ceil(total / limit),
+		};
+	}
+
+	// EDIT the findAllForSupervisor method - same fix:
+	async findAllForSupervisor(page = 1, limit = 10, supervisorId: number, form_id?: string, project_id?: string) {
+		const query = this.submissionRepo
+			.createQueryBuilder('submission')
+			.leftJoinAndSelect('submission.user', 'user')
+			.leftJoinAndSelect('user.project', 'project')
+			.leftJoin('form', 'form', 'CAST(form.id AS TEXT) = submission.form_id') // FIX: Cast to text
+			.where('form.adminId = :supervisorId', { supervisorId })
+			.orderBy('submission.created_at', 'DESC')
+			.skip((page - 1) * limit)
+			.take(limit);
+
+		if (form_id) {
+			query.andWhere('submission.form_id = :form_id', { form_id });
+		}
+
+		if (project_id) {
+			query.andWhere('project.id = :project_id', { project_id: +project_id });
+		}
+
+		const [data, total] = await query.getManyAndCount();
+
+		return {
+			data,
+			total,
+			page,
+			lastPage: Math.ceil(total / limit),
+		};
+	}
 
 	async findAllByUser(userId: number) {
 		return this.submissionRepo.find({
@@ -508,25 +564,25 @@ async findAllForSupervisor(page = 1, limit = 10, supervisorId: number, form_id?:
 
 
 
-// 	async backfillUserIdFromRelation(batchSize = 500) {
-//   while (true) {
-//     const items: FormSubmission[] = await this.submissionRepo.find({
-//       where: { userId: null },
-//       relations: ['user'],
-//       take: batchSize,
-//     });
+	// 	async backfillUserIdFromRelation(batchSize = 500) {
+	//   while (true) {
+	//     const items: FormSubmission[] = await this.submissionRepo.find({
+	//       where: { userId: null },
+	//       relations: ['user'],
+	//       take: batchSize,
+	//     });
 
-//     if (items.length === 0) break;
+	//     if (items.length === 0) break;
 
-//     for (const s of items) {
-//       if (s.user?.id) s.userId = s.user.id;
-//     }
+	//     for (const s of items) {
+	//       if (s.user?.id) s.userId = s.user.id;
+	//     }
 
-//     await this.submissionRepo.save(items);
-//   }
+	//     await this.submissionRepo.save(items);
+	//   }
 
-//   return { message: 'Backfill completed' };
-// }
+	//   return { message: 'Backfill completed' };
+	// }
 
 }
 

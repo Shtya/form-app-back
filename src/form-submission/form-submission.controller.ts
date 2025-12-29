@@ -16,18 +16,19 @@ export class FormSubmissionController {
 		return this.submissionService.create(userId, dto);
 	}
 
-  @Get()
-  getAll(@Req() req: any, @Query('page') page = '1', @Query('limit') limit = '10', @Query('form_id') form_id?: string, @Query('project_id') project_id?: string) {
-    const user = req.user;
+	@Get()
+	getAll(@Req() req: any, @Query('page') page = '1', @Query('limit') limit = '10', @Query('form_id') form_id?: string, @Query('project_id') project_id?: string) {
+		const user = req.user;
 
-    if (user.role === 'admin') {
-      return this.submissionService.findAllForAdmin(+page, +limit, form_id, project_id);
-    } else if (user.role === 'supervisor') {
-      return this.submissionService.findAllForSupervisor(+page, +limit, user.id, form_id, project_id);
-    } else {
-      return this.submissionService.findAllByUser(user.id);
-    }
-  }
+		if (user.role === 'admin') {
+			return this.submissionService.findAllForAdmin(+page, +limit, form_id, project_id);
+		} else if (user.role === 'supervisor') {
+			// Supervisor sees submissions from their forms (forms with adminId = supervisor's id)
+			return this.submissionService.findAllForSupervisor(+page, +limit, user.id, form_id, project_id);
+		} else {
+			return this.submissionService.findAllByUser(user.id); // Regular user sees only their own
+		}
+	}
 
 	@Patch(':id')
 	async update(@Req() req: any, @Param('id') id: string, @Body() dto: any) {
