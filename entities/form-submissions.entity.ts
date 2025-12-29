@@ -39,12 +39,14 @@ export class FormSubmission {
 	@Column('boolean', { default: false })
 	isCheck: boolean;
 
+  @Column({default : 0 , nullable : true})
+  form_id : string ;
+@Column({ type: 'varchar', length: 36, nullable: true })
+  employeeId: string;
+  @CreateDateColumn()
+  created_at: Date;
 	@Column('jsonb')
 	answers: Record<string, any>;
 
-	@Column({ nullable: false })
-	form_id: string;
 
-	@CreateDateColumn()
-	created_at: Date;
 }

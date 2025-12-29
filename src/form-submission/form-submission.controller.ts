@@ -1,3 +1,5 @@
+// form-submission.controller.ts
+
 import { Controller, Post, Body, Get, Delete, Param, UseGuards, Req, ForbiddenException, Query, Patch } from '@nestjs/common';
 import { FormSubmissionService } from './form-submission.service';
 import { CreateFormSubmissionDto } from 'dto/form-submission.dto';
@@ -49,15 +51,16 @@ export class FormSubmissionController {
 		const user = req.user;
 		const submission = await this.submissionService.findOne(+id);
 
-		if (!submission) {
-			throw new ForbiddenException('Submission not found');
-		}
-		if (user.role !== 'admin' && submission.user.id !== user.id) {
-			throw new ForbiddenException('You do not have permission to delete this submission');
-		}
+    if (!submission) {
+      throw new ForbiddenException('Submission not found');
+    }
 
-		return this.submissionService.deleteSubmission(+id);
-	}
+    if (user.role !== 'admin' && submission.user.id !== user.id) {
+      throw new ForbiddenException('You do not have permission to delete this submission');
+    }
+
+    return this.submissionService.deleteSubmission(+id);
+  }
 
 	@Post('bulk-upload')
 	async bulkUpload(@Req() req: any, @Body() body: { submissions: Array<{ userId: number; answers: Record<string, any>; form_id: string }> }) {

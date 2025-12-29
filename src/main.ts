@@ -28,8 +28,8 @@ async function bootstrap() {
 
   const loggingValidationPipe = app.get(LoggingValidationPipe);
   app.useGlobalPipes(loggingValidationPipe);
-  app.useGlobalPipes(new ValidationPipe({ 
-    disableErrorMessages: false , 
+  app.useGlobalPipes(new ValidationPipe({
+    disableErrorMessages: false ,
     transform: true,
   exceptionFactory: (errors) => {
         const formattedErrors = errors.map((err) => ({
