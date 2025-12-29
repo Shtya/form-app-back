@@ -8,13 +8,13 @@ import { AuthGuard } from 'src/auth/auth.guard';
 @Controller('form-submissions')
 @UseGuards(AuthGuard)
 export class FormSubmissionController {
-  constructor(private readonly submissionService: FormSubmissionService) {}
+	constructor(private readonly submissionService: FormSubmissionService) { }
 
-  @Post()
-  create(@Req() req: any, @Body() dto: CreateFormSubmissionDto) {
-    const userId = req.user.id;
-    return this.submissionService.create(userId, dto);
-  }
+	@Post()
+	create(@Req() req: any, @Body() dto: CreateFormSubmissionDto) {
+		const userId = req.user.id;
+		return this.submissionService.create(userId, dto);
+	}
 
   @Get()
   getAll(@Req() req: any, @Query('page') page = '1', @Query('limit') limit = '10', @Query('form_id') form_id?: string, @Query('project_id') project_id?: string) {
@@ -29,26 +29,26 @@ export class FormSubmissionController {
     }
   }
 
-  @Patch(':id')
-  async update(@Req() req: any, @Param('id') id: string, @Body() dto: any) {
-    const user = req.user;
-    const submission = await this.submissionService.findOne(+id);
+	@Patch(':id')
+	async update(@Req() req: any, @Param('id') id: string, @Body() dto: any) {
+		const user = req.user;
+		const submission = await this.submissionService.findOne(+id);
 
-    if (!submission) {
-      throw new ForbiddenException('Submission not found');
-    }
+		if (!submission) {
+			throw new ForbiddenException('Submission not found');
+		}
 
-    if (user.role !== 'admin' && submission.user.id !== user.id) {
-      throw new ForbiddenException('You do not have permission to update this submission');
-    }
+		if (user.role !== 'admin' && submission.user.id !== user.id) {
+			throw new ForbiddenException('You do not have permission to update this submission');
+		}
 
-    return this.submissionService.update(+id, dto);
-  }
+		return this.submissionService.update(+id, dto);
+	}
 
-  @Delete(':id')
-  async delete(@Req() req: any, @Param('id') id: string) {
-    const user = req.user;
-    const submission = await this.submissionService.findOne(+id);
+	@Delete(':id')
+	async delete(@Req() req: any, @Param('id') id: string) {
+		const user = req.user;
+		const submission = await this.submissionService.findOne(+id);
 
     if (!submission) {
       throw new ForbiddenException('Submission not found');
@@ -61,48 +61,12 @@ export class FormSubmissionController {
     return this.submissionService.deleteSubmission(+id);
   }
 
-  // Add endpoint to sync submission with employee
-  @Post(':id/sync-employee/:employeeId')
-  @UseGuards(AuthGuard)
-  async syncEmployee(
-    @Req() req: any,
-    @Param('id') id: string,
-    @Param('employeeId') employeeId: string
-  ) {
-    const user = req.user;
-    const submission = await this.submissionService.findOne(+id);
-
-    if (!submission) {
-      throw new ForbiddenException('Submission not found');
-    }
-
-    if (user.role !== 'admin' && submission.user.id !== user.id) {
-      throw new ForbiddenException('You do not have permission to sync this submission');
-    }
-
-    return this.submissionService.syncSubmissionWithEmployee(+id, employeeId);
-  }
-
-  // Get submission by employee ID
-  @Get('by-employee/:employeeId')
-  @UseGuards(AuthGuard)
-  async getByEmployeeId(
-    @Req() req: any,
-    @Param('employeeId') employeeId: string
-  ) {
-    const user = req.user;
-    const submission = await this.submissionService.findByEmployeeId(employeeId);
-
-    if (!submission) {
-      throw new ForbiddenException('Submission not found');
-    }
-
-    if (user.role !== 'admin' && submission.user.id !== user.id) {
-      throw new ForbiddenException('You do not have permission to view this submission');
-    }
-
-    return submission;
-  }
-
-
+	@Post('bulk-upload')
+	async bulkUpload(@Req() req: any, @Body() body: { submissions: Array<{ userId: number; answers: Record<string, any>; form_id: string }> }) {
+		const user = req.user;
+		if (user.role !== 'admin' && user.role !== 'supervisor') {
+			throw new ForbiddenException('Only admins and supervisors can bulk upload submissions');
+		}
+		return this.submissionService.bulkCreateSubmissions(body.submissions);
+	}
 }

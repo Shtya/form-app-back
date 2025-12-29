@@ -1,9 +1,9 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { FormSubmission } from 'entities/form-submissions.entity';
 import { CreateFormSubmissionDto } from 'dto/form-submission.dto';
-import { User } from 'entities/user.entity';
+import { User, UserRole } from 'entities/user.entity';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
 
@@ -347,7 +347,7 @@ async findAllForSupervisor(page = 1, limit = 10, supervisorId: number, form_id?:
             },
           ),
         );
-
+        const supervisor = await this.userRepo.find({where:{project:{id:user.project.id},role:UserRole.SUPERVISOR}})
         console.log('Employee updated in Project A:', response.data);
       } catch (error) {
         console.error('Failed to update employee in Project A:', error.response?.data || error.message);
@@ -365,4 +365,169 @@ async findAllForSupervisor(page = 1, limit = 10, supervisorId: number, form_id?:
 			relations: ['user'],
 		});
 	}
+
+
+	// async bulkCreateSubmissions(submissions: Array<{ userId: number; answers: Record<string, any>; form_id: string }>) {
+	//   const results = [];
+
+	//   for (const sub of submissions) {
+	//     try {
+	//       // Find user by email
+	//       const user = await this.userRepo.findOne({ where: { id: sub.userId } });
+	//       if (!sub.userId || isNaN(sub.userId)) {
+	//         results.push({
+	//           userId: sub.userId || null,
+	//           status: 'failed',
+	//           reason: `User with ID "${sub.userId}" not found`,
+	//         });
+	//         continue;
+	//       }
+
+	//       // Check if submission already exists for this user and form
+	//       const existing = await this.submissionRepo.findOne({
+	//         where: { user: { id: user.id }, form_id: sub.form_id },
+	//       });
+
+	//       if (existing) {
+	//         // Update existing submission
+	//         existing.answers = sub.answers;
+	//         await this.submissionRepo.save(existing);
+	//         results.push({
+	//           userId: sub.userId,
+	//           status: 'updated',
+	//           submissionId: existing.id,
+	//         });
+	//       } else {
+	//         // Create new submission
+	//         const submission = this.submissionRepo.create({
+	//           user,
+	//           answers: sub.answers,
+	//           form_id: sub.form_id,
+	//         });
+	//         const saved = await this.submissionRepo.save(submission);
+	//         results.push({
+	//           userId: sub.userId,
+	//           status: 'created',
+	//           submissionId: saved.id,
+	//         });
+	//       }
+	//     } catch (error) {
+	//       results.push({
+	//         userId: sub.userId,
+	//         status: 'failed',
+	//         reason: error.message || 'Unknown error',
+	//       });
+	//     }
+	//   }
+
+	//   return {
+	//     message: 'Bulk submission upload completed',
+	//     results,
+	//   };
+	// }
+
+
+	private chunk<T>(arr: T[], size: number): T[][] {
+		const res: T[][] = [];
+		for (let i = 0; i < arr.length; i += size) res.push(arr.slice(i, i + size));
+		return res;
+	}
+
+	async bulkCreateSubmissions(
+		submissions: Array<{ userId: number; answers: Record<string, any>; form_id: string }>,
+	) {
+		if (!Array.isArray(submissions) || submissions.length === 0) {
+			throw new BadRequestException('submissions must be a non-empty array');
+		}
+
+		// 1) validate input
+		const normalized = submissions.map((s) => ({
+			userId: Number(s.userId),
+			form_id: String(s.form_id),
+			answers: s.answers ?? {},
+		}));
+
+		const invalid = normalized.filter(s => !Number.isFinite(s.userId) || s.userId <= 0 || !s.form_id);
+		if (invalid.length) {
+			return {
+				message: 'Bulk submission upload completed',
+				totalReceived: submissions.length,
+				totalUpserted: 0,
+				totalFailed: invalid.length,
+				results: invalid.map(s => ({
+					userId: s.userId || null,
+					status: 'failed',
+					reason: 'Invalid userId or form_id',
+				})),
+			};
+		}
+
+		// 2) load users in one query
+		const userIds = [...new Set(normalized.map(s => s.userId))];
+		const users: User[] = await this.userRepo.find({ where: { id: In(userIds) } });
+		const existingUserIds = new Set(users.map(u => u.id));
+
+		const missingUsers = normalized.filter(s => !existingUserIds.has(s.userId));
+		const valid = normalized.filter(s => existingUserIds.has(s.userId));
+
+		// 3) build rows for upsert (use userId column, not relation)
+		const rows: Partial<FormSubmission>[] = valid.map(s => ({
+			userId: s.userId,
+			form_id: s.form_id,
+			answers: s.answers,
+			// isCheck: false, // لو عايز تثبت قيمة معينة أثناء الرفع
+		}));
+
+		// 4) upsert in chunks (fast)
+		const CHUNK_SIZE = 200;
+		for (const part of this.chunk(rows, CHUNK_SIZE)) {
+			await this.submissionRepo.upsert(part, {
+				conflictPaths: ['userId', 'form_id'],
+			});
+		}
+
+		return {
+			message: 'Bulk submission upload completed',
+			totalReceived: submissions.length,
+			totalUpserted: valid.length,
+			totalFailed: missingUsers.length,
+			results: [
+				...missingUsers.map(s => ({
+					userId: s.userId,
+					status: 'failed',
+					reason: `User with ID "${s.userId}" not found`,
+				})),
+				...valid.map(s => ({
+					userId: s.userId,
+					status: 'upserted', // created or updated
+					form_id: s.form_id,
+				})),
+			],
+		};
+	}
+
+
+
+// 	async backfillUserIdFromRelation(batchSize = 500) {
+//   while (true) {
+//     const items: FormSubmission[] = await this.submissionRepo.find({
+//       where: { userId: null },
+//       relations: ['user'],
+//       take: batchSize,
+//     });
+
+//     if (items.length === 0) break;
+
+//     for (const s of items) {
+//       if (s.user?.id) s.userId = s.user.id;
+//     }
+
+//     await this.submissionRepo.save(items);
+//   }
+
+//   return { message: 'Backfill completed' };
+// }
+
 }
+
+

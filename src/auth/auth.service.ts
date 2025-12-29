@@ -148,6 +148,7 @@ export class AuthService {
 				created_by,
 				role: dto.role,
 				project,
+				form_id: dto.formId ? parseInt(dto.formId) : null,
 			} as any);
 
 			try {
