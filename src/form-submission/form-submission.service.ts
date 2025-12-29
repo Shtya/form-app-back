@@ -45,13 +45,42 @@ export class FormSubmissionService {
 
 
 	// EDIT the findAllForAdmin method - change the join:
+	// async findAllForAdmin(page = 1, limit = 10, form_id?: string, project_id?: string) {
+	// 	const query = this.submissionRepo
+	// 		.createQueryBuilder('submission')
+	// 		.leftJoinAndSelect('submission.user', 'user')
+	// 		.leftJoinAndSelect('user.project', 'project')
+	// 		.leftJoinAndSelect('submission.form', 'form')   // ✅ الأفضل لو relation موجود
+	// 		.where('form.adminId IS NULL')
+	// 		.orderBy('submission.created_at', 'DESC')
+	// 		.skip((page - 1) * limit)
+	// 		.take(limit);
+
+	// 	if (form_id) query.andWhere('submission.form_id = :form_id', { form_id });
+
+	// 	if (project_id) query.andWhere('project.id = :project_id', { project_id: +project_id });
+
+	// 	const [data, total] = await query.getManyAndCount();
+	// 	return { data, total, page, lastPage: Math.ceil(total / limit) };
+	// }
+
 	async findAllForAdmin(page = 1, limit = 10, form_id?: string, project_id?: string) {
+		// const query = this.submissionRepo
+		// 	.createQueryBuilder('submission')
+		// 	.leftJoinAndSelect('submission.user', 'user')
+		// 	.leftJoinAndSelect('user.project', 'project')
+		// 	.leftJoin('form', 'form', 'CAST(form.id AS TEXT) = submission.form_id') // FIX: Cast to text
+		// 	.where('form.adminId IS NULL')
+		// 	.orderBy('submission.created_at', 'DESC')
+		// 	.skip((page - 1) * limit)
+		// 	.take(limit);
 		const query = this.submissionRepo
 			.createQueryBuilder('submission')
 			.leftJoinAndSelect('submission.user', 'user')
 			.leftJoinAndSelect('user.project', 'project')
-			.leftJoin('form', 'form', 'CAST(form.id AS TEXT) = submission.form_id') // FIX: Cast to text
-			.where('form.adminId IS NULL')
+			// لو عايز كمان ترجع بيانات الفورم نفسها (اختياري)
+			.leftJoin('form', 'form', 'CAST(form.id AS TEXT) = submission.form_id')
+			.addSelect(['form.id', 'form.adminId']) // أو addSelect('form') لو انت محتاج كل الأعمدة
 			.orderBy('submission.created_at', 'DESC')
 			.skip((page - 1) * limit)
 			.take(limit);
@@ -304,24 +333,24 @@ export class FormSubmissionService {
 
 
 
-// 	async backfillUserIdFromRelation(batchSize = 500) {
-//   while (true) {
-//     const items: FormSubmission[] = await this.submissionRepo.find({
-//       where: { userId: null },
-//       relations: ['user'],
-//       take: batchSize,
-//     });
+	// 	async backfillUserIdFromRelation(batchSize = 500) {
+	//   while (true) {
+	//     const items: FormSubmission[] = await this.submissionRepo.find({
+	//       where: { userId: null },
+	//       relations: ['user'],
+	//       take: batchSize,
+	//     });
 
-//     if (items.length === 0) break;
+	//     if (items.length === 0) break;
 
-//     for (const s of items) {
-//       if (s.user?.id) s.userId = s.user.id;
-//     }
+	//     for (const s of items) {
+	//       if (s.user?.id) s.userId = s.user.id;
+	//     }
 
-//     await this.submissionRepo.save(items);
-//   }
+	//     await this.submissionRepo.save(items);
+	//   }
 
-//   return { message: 'Backfill completed' };
-// }
+	//   return { message: 'Backfill completed' };
+	// }
 
 }

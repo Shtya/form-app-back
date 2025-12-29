@@ -14,18 +14,11 @@ export class FormSubmissionController {
 		return this.submissionService.create(userId, dto);
 	}
 
-	// @Get("seed")
-	// SEED() {
-	// 	return this.submissionService.backfillUserIdFromRelation();
-	// }
-
-	// TO THIS:
 	@Get()
 	getAll(@Req() req: any, @Query('page') page = '1', @Query('limit') limit = '10', @Query('form_id') form_id?: string, @Query('project_id') project_id?: string) {
 		const user = req.user;
 
 		if (user.role === 'admin') {
-			// Admin sees submissions from forms with adminId = null
 			return this.submissionService.findAllForAdmin(+page, +limit, form_id, project_id);
 		} else if (user.role === 'supervisor') {
 			// Supervisor sees submissions from their forms (forms with adminId = supervisor's id)
