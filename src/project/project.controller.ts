@@ -18,7 +18,8 @@ export class ProjectsController {
 	}
 
 	@Get()
-
+	@UseGuards(AuthGuard)
+	@Roles(UserRole.ADMIN, UserRole.SUPERVISOR)
 	findAll(
 		@Query('page') page = '1',
 		@Query('limit') limit = '10',
@@ -27,7 +28,16 @@ export class ProjectsController {
 		const user = req.user;
 		return this.projectsService.findAll(+page, +limit, user);
 	}
+@Get('for-form')
 
+	findAllForform(
+		@Query('page') page = '1',
+		@Query('limit') limit = '10',
+		@Req() req: any
+	) {
+		const user = req.user;
+		return this.projectsService.findAllForForm(+page, +limit, user);
+	}
 	@Get(':id/users')
 	getUsersByProject(@Param('id', ParseIntPipe) id: number) {
 		return this.projectsService.getUsersByProject(id);
