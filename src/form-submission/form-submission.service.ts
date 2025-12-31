@@ -28,7 +28,7 @@ export class FormSubmissionService {
     if (!user) throw new NotFoundException('User not found');
 
     const existing = await this.submissionRepo.findOne({
-      where: { user: { id: userId } },
+      where: { user: { id: userId } }
     });
 
     if (existing) {
