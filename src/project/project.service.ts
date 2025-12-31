@@ -52,7 +52,7 @@ export class ProjectsService {
 	async findAll(page = 1, limit = 10, user?: any) {
 		let whereCondition: any = { deleted_at: null };
 		const userData = await this.userRepo.findOne({where : {id : user?.id }})
- 
+
 
 		if (user.role === UserRole.SUPERVISOR) {
 			whereCondition = {
@@ -61,7 +61,7 @@ export class ProjectsService {
 			};
 		} else if (user.role === UserRole.ADMIN) {
 			whereCondition = {
-				...whereCondition, 
+				...whereCondition,
 			};
 		}
 
@@ -81,7 +81,27 @@ export class ProjectsService {
 		};
 	}
 
+async findAllForForm(page = 1, limit = 10, user?: any) {
+		const userData = await this.userRepo.findOne({where : {id : user?.id }})
 
+
+
+
+		const [data, total] = await this.projectRepository.findAndCount({
+
+			skip: (page - 1) * limit,
+			take: limit,
+			order: { created_at: 'DESC' },
+			withDeleted:false
+		});
+
+		return {
+			total,
+			page,
+			lastPage: Math.ceil(total / limit),
+			data,
+		};
+	}
 	async getUsersByProject(projectId: number) {
 		const project = await this.projectRepository.findOne({
 			where: { id: projectId, deleted_at: null },
