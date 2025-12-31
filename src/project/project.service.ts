@@ -81,7 +81,7 @@ export class ProjectsService {
 		};
 	}
 
-async findAllForForm(page = 1, limit = 10, user?: any) {
+async findAllForForm( user?: any) {
 		const userData = await this.userRepo.findOne({where : {id : user?.id }})
 
 
@@ -89,16 +89,12 @@ async findAllForForm(page = 1, limit = 10, user?: any) {
 
 		const [data, total] = await this.projectRepository.findAndCount({
 
-			skip: (page - 1) * limit,
-			take: limit,
 			order: { created_at: 'DESC' },
 			withDeleted:false
 		});
 
 		return {
 			total,
-			page,
-			lastPage: Math.ceil(total / limit),
 			data,
 		};
 	}

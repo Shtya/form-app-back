@@ -31,12 +31,11 @@ export class ProjectsController {
 @Get('for-form')
 
 	findAllForform(
-		@Query('page') page = '1',
-		@Query('limit') limit = '10',
+
 		@Req() req: any
 	) {
 		const user = req.user;
-		return this.projectsService.findAllForForm(+page, +limit, user);
+		return this.projectsService.findAllForForm( user);
 	}
 	@Get(':id/users')
 	getUsersByProject(@Param('id', ParseIntPipe) id: number) {
