@@ -6,6 +6,7 @@ import { CreateFormSubmissionDto } from 'dto/form-submission.dto';
 import { User, UserRole } from 'entities/user.entity';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
+import { Form } from 'entities/forms.entity';
 
 @Injectable()
 export class FormSubmissionService {
@@ -16,6 +17,8 @@ export class FormSubmissionService {
     @InjectRepository(User)
     private userRepo: Repository<User>,
 
+    @InjectRepository(Form)
+    private formRepo: Repository<Form>,
 
     private readonly httpService: HttpService,
   ) {}
@@ -46,7 +49,7 @@ export class FormSubmissionService {
     // --- CALL EMPLOYEE SERVICE ---
     try {
       console.log('Form submission data:', dto);
-      const employeePayload = this.mapFormToEmployee(dto, user);
+      const employeePayload = await this.mapFormToEmployee(dto, user);
       console.log(`Employee payload: ${JSON.stringify(employeePayload)}`);
 
       const response = await firstValueFrom(
@@ -77,97 +80,57 @@ export class FormSubmissionService {
     return savedSubmission;
   }
 
-  private mapFormToEmployee(dto: CreateFormSubmissionDto, user: User): Record<string, any> {
-    const answers = dto.answers;
-    const employeeData: Record<string, any> = {};
-
-    // ======= COPY ALL FIELDS DIRECTLY =======
-    Object.keys(answers).forEach(key => {
-      employeeData[key] = answers[key];
+  private async mapFormToEmployee(dto: CreateFormSubmissionDto, user: User) {
+    const answers = dto.answers || {};
+    
+    // Fetch the form with its fields to get types and labels
+    const form = await this.formRepo.findOne({
+      where: { id: parseInt(dto.form_id) },
+      relations: ['fields']
     });
 
-    // ======= ADD SPECIFIC FIELD MAPPINGS =======
-    // Personal Information
-    employeeData.employeeName = answers['employeeName'] || answers['fullName'] || answers['name'] || answers['اسم_الموظف'];
-    employeeData.fullName = answers['fullName'] || answers['employeeName'] || answers['name'] || answers['اسم_الموظف'];
-    employeeData.name = answers['name'] || answers['fullName'] || answers['employeeName'] || answers['اسم_الموظف'];
-    employeeData.اسم_الموظف = answers['اسم_الموظف'] || answers['fullName'] || answers['employeeName'];
+    const personalInformation = [];
 
-    // Age field
-    employeeData.Age = answers['age'] || answers['Age'] || answers['العمر'];
-    employeeData.age = answers['age'] || answers['Age'] || answers['العمر'];
-    employeeData.العمر = answers['العمر'] || answers['age'] || answers['Age'];
+    if (form && form.fields) {
+      form.fields.forEach(field => {
+        const value = answers[field.key];
+        // We only include fields that were actually answered
+        if (value !== undefined) {
+          personalInformation.push({
+            key: field.key,
+            value: value,
+            type: field.type,
+            label: field.label
+          });
+        }
+      });
+    } else {
+      // Fallback: if form or fields not found, just use raw answers as keys
+      Object.keys(answers).forEach(key => {
+        personalInformation.push({
+          key: key,
+          value: answers[key],
+          type: 'text', // default type
+          label: key
+        });
+      });
+    }
 
-    // Passport fields
-    employeeData.passportNumber = answers['passportNumber'];
-    employeeData.passportIssueDate = answers['passportIssueDate'];
-    employeeData.passportExpiryDate = answers['passportExpiryDate'];
-    employeeData.birthPlace = answers['birthPlace'];
-    employeeData.idIssuePlace = answers['idIssuePlace'];
+    const employeePayload: Record<string, any> = {
+      personalInformation
+    };
 
-    // Other fields
-    employeeData.nationality = answers['nationality'] || answers['الجنسية'];
-    employeeData.الجنسية = answers['الجنسية'] || answers['nationality'];
-
-    employeeData.idNumber = answers['idNumber'] || answers['رقم_الهوية'];
-    employeeData.رقم_الهوية = answers['رقم_الهوية'] || answers['idNumber'];
-
-    employeeData.email = answers['email'] || answers['البريد_الإلكتروني'];
-    employeeData.البريد_الإلكتروني = answers['البريد_الإلكتروني'] || answers['email'];
-
-    employeeData.birthDate = answers['birthDate'] || answers['تاريخ_الميلاد'];
-    employeeData.تاريخ_الميلاد = answers['تاريخ_الميلاد'] || answers['birthDate'];
-
-    employeeData.mobileNumber = answers['mobileNumber'] || answers['رقم_الجوال'] || answers['رقم-الهاتف'];
-    employeeData.رقم_الجوال = answers['رقم_الجوال'] || answers['mobileNumber'] || answers['رقم-الهاتف'];
-
-    // Employment Information
-    employeeData.joiningDate = answers['joiningDate'] || answers['تاريخ_الالتحاق'];
-    employeeData.تاريخ_الالتحاق = answers['تاريخ_الالتحاق'] || answers['joiningDate'];
-
-    // Banking
-    employeeData.bankIban = answers['bankIban'] || answers['رقم_الايبان'];
-    employeeData.رقم_الايبان = answers['رقم_الايبان'] || answers['bankIban'];
-
-    employeeData.bankName = answers['bankName'] || answers['اسم_البنك'];
-    employeeData.اسم_البنك = answers['اسم_البنك'] || answers['bankName'];
-
-    // Additional Information
-    employeeData.projectName = user.project?.name || answers['projectName'] || answers['اسم_المشروع'];
-    employeeData.اسم_المشروع = answers['اسم_المشروع'] || user.project?.name;
-
-    employeeData.specialization = answers['specialization'] || answers['التخصص'];
-    employeeData.التخصص = answers['التخصص'] || answers['specialization'];
-
-    employeeData.idExpiryDate = answers['idExpiryDate'] || answers['تاريخ_انتهاء_الهوية'];
-    employeeData.تاريخ_انتهاء_الهوية = answers['تاريخ_انتهاء_الهوية'] || answers['idExpiryDate'];
-
-    employeeData.address = answers['address'] || answers['العنوان'];
-    employeeData.العنوان = answers['العنوان'] || answers['address'];
-
-    employeeData.city = answers['city'] || answers['المدينة'];
-    employeeData.المدينة = answers['المدينة'] || answers['city'];
-
-    employeeData.religion = answers['religion'] || answers['الديانة'];
-    employeeData.الديانة = answers['الديانة'] || answers['religion'];
-
-    employeeData.maritalStatus = answers['maritalStatus'] || answers['الحالة_الاجتماعية'];
-    employeeData.الحالة_الاجتماعية = answers['الحالة_الاجتماعية'] || answers['maritalStatus'];
-
-    employeeData.degree = answers['degree'] || answers['المؤهل'];
-    employeeData.المؤهل = answers['المؤهل'] || answers['degree'];
-
-    employeeData.gender = answers['gender'] || answers['الجنس'];
-    employeeData.الجنس = answers['الجنس'] || answers['gender'];
-
-    // Document fields (with dashes)
-    employeeData['passport-photo-copy'] = answers['passport-photo-copy'];
-    employeeData['السيرة-الذاتية-'] = answers['السيرة-الذاتية-'];
-    employeeData['الشهادة-العلمية-'] = answers['الشهادة-العلمية-'];
-    employeeData['شهادة-الايبان-البنكي'] = answers['شهادة-الايبان-البنكي'];
-    employeeData['العنوان-الوطني---national-address'] = answers['العنوان-الوطني---national-address'];
-
-    return employeeData;
+    // Explicitly add project name from relation if available
+    if (user?.project?.name) {
+      employeePayload.projectName = user.project.name;
+    }
+    if (user.project?.id){
+      employeePayload.ProjectId = user.project.id;
+    }
+    if (user.email){
+      employeePayload.Email = user.email;
+    }
+    return employeePayload;
   }
 
   async findAllForAdmin(page = 1, limit = 10, form_id?: string, project_id?: string) {
@@ -283,11 +246,10 @@ export class FormSubmissionService {
     Object.assign(submission, dto);
     const updatedSubmission = await this.submissionRepo.save(submission);
 
-    // --- UPDATE EMPLOYEE IF EXISTS ---
     if (submission.employeeId) {
       try {
         const user = submission.user;
-        const employeePayload = this.mapFormToEmployee(
+        const employeePayload = await this.mapFormToEmployee(
           { answers: submission.answers, form_id: submission.form_id } as CreateFormSubmissionDto,
           user
         );
