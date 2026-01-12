@@ -36,6 +36,9 @@ export class FormField {
   @Column({ default: false })
   required: boolean;
 
+  @Column({ nullable: true })
+  length: number;
+
   @Column({ type: 'jsonb', nullable: true })
   options: string[]; // used if type is select, radio, checkbox
 
