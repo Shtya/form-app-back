@@ -236,6 +236,7 @@ export class FormService {
 				required: field.required,
 				options: field.options,
 				order: field.order ?? index,
+				length: field.length,
 				form,
 			}),
 		);

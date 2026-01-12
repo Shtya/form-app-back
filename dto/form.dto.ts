@@ -26,6 +26,10 @@ export class FormFieldDto {
   @IsOptional()
   required?: boolean = false;
 
+  @IsOptional()
+  @IsNumber()
+  length?: number;
+
   @IsArray()
   @IsString({ each: true })
   @IsOptional()
