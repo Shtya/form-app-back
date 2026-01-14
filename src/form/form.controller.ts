@@ -43,8 +43,6 @@ export class FormController {
 		return this.formService.updateFormTitle(+id, body.title, req.user);
 	}
 
-
-
 	@Patch()
 	@Roles(UserRole.ADMIN, UserRole.SUPERVISOR)
 	async updateForm(@Body() dto: UpdateFormDto) {
