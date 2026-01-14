@@ -17,11 +17,11 @@ export class FormSubmissionController {
 	}
 
 	@Get()
-	getAll(@Req() req: any, @Query('page') page = '1', @Query('limit') limit = '10', @Query('form_id') form_id?: string, @Query('project_id') project_id?: string) {
+	getAll(@Req() req: any, @Query('page') page = '1', @Query('limit') limit = '10', @Query('form_id') form_id?: string, @Query('project_id') project_id?: string , @Query('search') search?: string,) {
 		const user = req.user;
 
 		if (user.role === 'admin') {
-			return this.submissionService.findAllForAdmin(+page, +limit, form_id, project_id);
+			return this.submissionService.findAllForAdmin(+page, +limit, form_id, project_id  , search);
 		} else if (user.role === 'supervisor') {
 			// Supervisor sees submissions from their forms (forms with adminId = supervisor's id)
 			return this.submissionService.findAllForSupervisor(+page, +limit, user.id, form_id, project_id);

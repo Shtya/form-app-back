@@ -25,6 +25,32 @@ export class FormService {
 		return { message: 'Field orders updated successfully' };
 	}
 
+	async updateFormTitle(formId: number, title: string, user: any) {
+		if (!title || !String(title).trim()) {
+			throw new BadRequestException('Title is required');
+		}
+
+		const form = await this.formRepository.findOne({ where: { id: formId } });
+
+		if (!form) {
+			throw new NotFoundException('Form not found');
+		}
+ 
+		if (user.role === UserRole.SUPERVISOR) {
+			if (form.adminId !== user.id) {
+				throw new ForbiddenException('You are not allowed to edit this form');
+			}
+		} else if (user.role === UserRole.ADMIN) { 
+			if (form.adminId !== null) {
+				throw new ForbiddenException('Admins can only edit admin forms');
+			}
+		}
+
+		form.title = title.trim();
+		return await this.formRepository.save(form);
+	}
+
+
 	async activateForm(id: number): Promise<Form> {
 		const formToActivate = await this.formRepository.findOne({ where: { id } });
 
@@ -224,7 +250,7 @@ export class FormService {
 	// form.service.ts
 
 	async addFieldsToForm(formId: number, dto: any) {
- 		const form = await this.formRepository.findOne({ where: { id: formId } });
+		const form = await this.formRepository.findOne({ where: { id: formId } });
 		if (!form) throw new NotFoundException('Form not found');
 
 		const fields = dto.fields.map((field, index) =>

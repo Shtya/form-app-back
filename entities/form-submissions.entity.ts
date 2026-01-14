@@ -41,10 +41,13 @@ export class FormSubmission {
 
   @Column({default : 0 , nullable : true})
   form_id : string ;
-@Column({ type: 'varchar', length: 36, nullable: true })
+
+	@Column({ type: 'varchar', length: 36, nullable: true })
   employeeId: string;
-  @CreateDateColumn()
+  
+	@CreateDateColumn()
   created_at: Date;
+	
 	@Column('jsonb')
 	answers: Record<string, any>;
 
