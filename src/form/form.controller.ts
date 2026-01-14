@@ -44,7 +44,7 @@ export class FormController {
 	}
 
 
-  
+
 	@Patch()
 	@Roles(UserRole.ADMIN, UserRole.SUPERVISOR)
 	async updateForm(@Body() dto: UpdateFormDto) {
@@ -52,8 +52,8 @@ export class FormController {
 	}
 
 	@Get()
-	async getAllForms() {
-		return this.formService.getAllForms();
+	async getAllForms(@Query('page') page: number = 1, @Query('limit') limit: number = 10,) {
+		return this.formService.getAllForms(page|| 1 , limit || 100);
 	}
 
 	@Get("/supervisor")
