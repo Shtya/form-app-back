@@ -1,12 +1,12 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, Repository } from 'typeorm';
-import { FormSubmission } from 'entities/form-submissions.entity';
-import { CreateFormSubmissionDto } from 'dto/form-submission.dto';
-import { User, UserRole } from 'entities/user.entity';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
-import { Form } from 'entities/forms.entity';
+import { In, Repository } from 'typeorm';
+import { FormSubmission, SubmissionStatus } from 'entities/form-submissions.entity';
+import { CreateFormSubmissionDto } from 'dto/form-submission.dto';
+import { User, UserRole } from 'entities/user.entity';
+import { Form, ApprovalFlow } from 'entities/forms.entity';
 
 @Injectable()
 export class FormSubmissionService {
@@ -30,52 +30,113 @@ export class FormSubmissionService {
 		});
 		if (!user) throw new NotFoundException('User not found');
 
-		const existing = await this.submissionRepo.findOne({
-			where: { user: { id: userId } }
-		});
+    const existing = await this.submissionRepo.findOne({
+      where: { user: { id: userId , } }
+    });
+    const form = await this.formRepo.findOne({ 
+        where: { id: parseInt(dto.form_id) },
+        relations: ['fields']
+    });
+    if (!form) throw new NotFoundException('Form not found');
+    
+    if (existing && form.type === 'project') {
+      throw new BadRequestException('You have already submitted this form.');
+    }
 
-		if (existing) {
-			throw new BadRequestException('You have already submitted this form.');
-		}
+    // Fetch form to check approval flow
+    let status = SubmissionStatus.PENDING;
 
-		const submission = this.submissionRepo.create({
-			user,
-			answers: dto.answers,
-			form_id: dto.form_id,
-		});
+
+    const submission = this.submissionRepo.create({
+      user,
+      answers: dto.answers,
+      form_id: dto.form_id,
+      status: status,
+    });
 
 		const savedSubmission = await this.submissionRepo.save(submission);
 
-		// --- CALL EMPLOYEE SERVICE ---
-		try {
-			console.log('Form submission data:', dto);
-			const employeePayload = await this.mapFormToEmployee(dto, user);
-			console.log(`Employee payload: ${JSON.stringify(employeePayload)}`);
+    // --- CALL EXTERNAL SERVICE ---
+    try {
+      if (form.type === 'employee_request') {
+        const requestPayload = {
+          title: form.title,
+          description: form.description,
+          approvalFlow: form.approvalFlow,
+          projectId: user.project?.id,
+          projectName: user.project?.name,
+          employeeId: user.email, // using email as ID
+          fields: (form.fields || []).map(f => ({
+            key: f.key,
+            value: String(dto.answers[f.key] || ''),
+            label: f.label,
+            type: f.type
+          }))
+        };
 
-			const response = await firstValueFrom(
-				this.httpService.post(
-					`${process.env.NEST_PUBLIC_BASE_URL_2}/employees/from-data`,
-					employeePayload,
-					{
-						headers: {
-							'Authorization': `Bearer ${process.env.TOKENJWT_SECRET}`,
-							'Content-Type': 'application/json',
-						},
-					},
-				),
-			);
+        const response = await firstValueFrom(
+          this.httpService.post(
+            `${process.env.NEST_PUBLIC_BASE_URL_2}/requests`,
+            requestPayload,
+            {
+              headers: {
+                'Authorization': `Bearer ${process.env.TOKENJWT_SECRET}`,
+                'Content-Type': 'application/json',
+              },
+            },
+          ),
+        );
+        console.log('Request created externally:', response.data);
+      } else {
+        // Handle Project/Employee Creation Flow
+        console.log('Form submission data (project):', dto);
+        const employeePayload = await this.mapFormToEmployee(dto, user);
+        
+        // Inject Workflow Status for Project Forms
+        if (form?.approvalFlow) {
+           const flow = form.approvalFlow;
+           if (flow === ApprovalFlow.HR_ONLY) {
+               employeePayload.workflowStatus = 'hr_review';
+               employeePayload.isVerifiedBySupervisor = true;
+           } else if (flow === ApprovalFlow.SUPERVISOR_ONLY) {
+               employeePayload.workflowStatus = 'supervisor_review';
+               employeePayload.isVerifiedByHr = true;
+           } else if (flow === ApprovalFlow.SUPERVISOR_THEN_HR) {
+               employeePayload.workflowStatus = 'supervisor_review';
+               employeePayload.isVerifiedBySupervisor = false;
+               employeePayload.isVerifiedByHr = false;
+           } else if (flow === ApprovalFlow.HR_THEN_SUPERVISOR) {
+               employeePayload.workflowStatus = 'hr_review'; // Start with HR
+               employeePayload.isVerifiedBySupervisor = false;
+               employeePayload.isVerifiedByHr = false;
+           }
+        }
 
-			// Store employee ID in submission
-			if (response.data?.success && response.data?.data?.employee?.id) {
-				savedSubmission.employeeId = response.data.data.employee.id;
-				await this.submissionRepo.save(savedSubmission);
-			}
+        console.log(`Employee payload: ${JSON.stringify(employeePayload)}`);
 
-			console.log('Employee created in Project A:', response.data);
-		} catch (error) {
-			console.error('Failed to create employee in Project A:', error.response?.data || error.message);
-			// You can decide to fail silently or throw
-		}
+        const response = await firstValueFrom(
+          this.httpService.post(
+            `${process.env.NEST_PUBLIC_BASE_URL_2}/employees/from-data`,
+            employeePayload,
+            {
+              headers: {
+                'Authorization': `Bearer ${process.env.TOKENJWT_SECRET}`,
+                'Content-Type': 'application/json',
+              },
+            },
+          ),
+        );
+
+        // Store employee ID in submission
+        if (response.data?.success && response.data?.data?.employee?.id) {
+          savedSubmission.employeeId = response.data.data.employee.id;
+          await this.submissionRepo.save(savedSubmission);
+        }
+        console.log('Employee created:', response.data);
+      }
+    } catch (error) {
+      console.error('Failed to call external service:', error.response?.data || error.message);
+    }
 
 		return savedSubmission;
 	}
@@ -133,16 +194,17 @@ export class FormSubmissionService {
 		return employeePayload;
 	}
 
-	async findAllForAdmin(page = 1, limit = 10, form_id?: string, project_id?: string, search?: string) {
-		const query = this.submissionRepo
-			.createQueryBuilder('submission')
-			.leftJoinAndSelect('submission.user', 'user')
-			.leftJoinAndSelect('user.project', 'project')
-			.leftJoin(Form, 'form', 'CAST(form.id AS TEXT) = submission.form_id') // ✅ الأفضل
-			.addSelect(['form.id', 'form.adminId'])
-			.orderBy('submission.created_at', 'DESC')
-			.skip((page - 1) * limit)
-			.take(limit);
+  async findAllForAdmin(page = 1, limit = 10, form_id?: string, project_id?: string, type?: string,search?: string) {
+    const query = this.submissionRepo
+      .createQueryBuilder('submission')
+      .leftJoinAndSelect('submission.user', 'user')
+      .leftJoinAndSelect('user.project', 'project')
+      .leftJoin(Form, 'form', 'CAST(form.id AS TEXT) = submission.form_id')
+      .addSelect(['form.id', 'form.adminId', 'form.type'])
+      .where('form.adminId IS NULL')
+      .orderBy('submission.created_at', 'DESC')
+      .skip((page - 1) * limit)
+      .take(limit);
 
 
 		if (form_id) {
@@ -161,6 +223,10 @@ export class FormSubmissionService {
 		}
 
 
+    if (type) {
+      query.andWhere('form.type = :type', { type });
+    }
+
 		const [data, total] = await query.getManyAndCount();
 
 		return {
@@ -171,24 +237,28 @@ export class FormSubmissionService {
 		};
 	}
 
-	async findAllForSupervisor(page = 1, limit = 10, supervisorId: number, form_id?: string, project_id?: string) {
-		const query = this.submissionRepo
-			.createQueryBuilder('submission')
-			.leftJoinAndSelect('submission.user', 'user')
-			.leftJoinAndSelect('user.project', 'project')
-			.leftJoin('form', 'form', 'CAST(form.id AS TEXT) = submission.form_id')
-			.where('form.adminId = :supervisorId', { supervisorId })
-			.orderBy('submission.created_at', 'DESC')
-			.skip((page - 1) * limit)
-			.take(limit);
+  async findAllForSupervisor(page = 1, limit = 10, supervisorId: number, form_id?: string, project_id?: string, type?: string) {
+    const query = this.submissionRepo
+      .createQueryBuilder('submission')
+      .leftJoinAndSelect('submission.user', 'user')
+      .leftJoinAndSelect('user.project', 'project')
+      .leftJoin(Form, 'form', 'CAST(form.id AS TEXT) = submission.form_id')
+      .where('form.adminId = :supervisorId', { supervisorId })
+      .orderBy('submission.created_at', 'DESC')
+      .skip((page - 1) * limit)
+      .take(limit);
 
 		if (form_id) {
 			query.andWhere('submission.form_id = :form_id', { form_id });
 		}
 
-		if (project_id) {
-			query.andWhere('project.id = :project_id', { project_id: +project_id });
-		}
+    if (project_id) {
+      query.andWhere('project.id = :project_id', { project_id: +project_id });
+    }
+
+    if (type) {
+        query.andWhere('form.type = :type', { type });
+    }
 
 		const [data, total] = await query.getManyAndCount();
 
@@ -227,12 +297,30 @@ export class FormSubmissionService {
 		};
 	}
 
-	async findAllByUser(userId: number) {
-		return this.submissionRepo.find({
-			where: { user: { id: userId } },
-			order: { created_at: 'DESC' },
-		});
-	}
+  async findAllByUser(userId: number, type?: string,search?: string) {
+    const whereClause: any = { user: { id: userId } };
+
+    if (type) {
+      // Find all forms of the requested type
+      const forms = await this.formRepo.find({
+        where: { type: type as any },
+        select: ['id']
+      });
+
+      if (!forms.length) {
+        return { data: [], total: 0 };
+      }
+
+      whereClause.form_id = In(forms.map(f => String(f.id)));
+    }
+
+    const data = await this.submissionRepo.find({
+      where: whereClause,
+      order: { created_at: 'DESC' },
+    });
+
+    return { data, total: data.length };
+  }
 
 	async findOne(id: number) {
 		return this.submissionRepo.findOne({
@@ -254,41 +342,6 @@ export class FormSubmissionService {
 		Object.assign(submission, dto);
 		const updatedSubmission = await this.submissionRepo.save(submission);
 
-		if (submission.employeeId) {
-			try {
-				const user = submission.user;
-				const employeePayload = await this.mapFormToEmployee(
-					{ answers: submission.answers, form_id: submission.form_id } as CreateFormSubmissionDto,
-					user
-				);
-
-				const response = await firstValueFrom(
-					this.httpService.patch(
-						`${process.env.NEST_PUBLIC_BASE_URL_2}/employees/${submission.employeeId}`,
-						employeePayload,
-						{
-							headers: {
-								'Authorization': `Bearer ${process.env.TOKENJWT_SECRET}`,
-								'Content-Type': 'application/json',
-							},
-						},
-					),
-				);
-
-				// Find supervisor for this project
-				const supervisor = await this.userRepo.find({
-					where: {
-						project: { id: user.project.id },
-						role: UserRole.SUPERVISOR
-					}
-				});
-
-				console.log('Employee updated in Project A:', response.data);
-			} catch (error) {
-				console.error('Failed to update employee in Project A:', error.response?.data || error.message);
-				// You can decide to fail silently or throw
-			}
-		}
 
 		return updatedSubmission;
 	}
@@ -300,26 +353,7 @@ export class FormSubmissionService {
 
 		if (!found) throw new NotFoundException('Submission not found');
 
-		// --- DELETE EMPLOYEE IF EXISTS ---
-		if (found.employeeId) {
-			try {
-				await firstValueFrom(
-					this.httpService.delete(
-						`${process.env.NEST_PUBLIC_BASE_URL_2}/employees/${found.employeeId}`,
-						{
-							headers: {
-								'Authorization': `Bearer ${process.env.TOKENJWT_SECRET}`,
-							},
-						},
-					),
-				);
 
-				console.log(`Employee ${found.employeeId} deleted in Project A`);
-			} catch (error) {
-				console.error('Failed to delete employee in Project A:', error.response?.data || error.message);
-				// You can decide to fail silently or throw
-			}
-		}
 
 		return this.submissionRepo.remove(found);
 	}
@@ -422,14 +456,67 @@ export class FormSubmissionService {
 		};
 	}
 
-	// Optional: Backfill method for missing userIds
-	async backfillUserIdFromRelation(batchSize = 500) {
-		while (true) {
-			const items: FormSubmission[] = await this.submissionRepo.find({
-				where: { userId: null },
-				relations: ['user'],
-				take: batchSize,
-			});
+
+  async approveSubmission(id: number, approverRole: UserRole) {
+    const submission = await this.submissionRepo.findOne({
+      where: { id },
+      relations: ['user']
+    });
+    if (!submission) throw new NotFoundException('Submission not found');
+    
+    const form = await this.formRepo.findOne({ where: { id: parseInt(submission.form_id) } });
+
+    if (!form || !form.approvalFlow || form.type !== 'employee_request') {
+        submission.status = SubmissionStatus.APPROVED;
+        return this.submissionRepo.save(submission);
+    }
+
+    const flow = form.approvalFlow;
+    const currentStatus = submission.status;
+
+    if (approverRole === UserRole.ADMIN) { 
+        if (currentStatus === SubmissionStatus.PENDING_HR) {
+            if (flow === ApprovalFlow.HR_ONLY) {
+                submission.status = SubmissionStatus.APPROVED;
+            } else if (flow === ApprovalFlow.HR_THEN_SUPERVISOR) {
+                submission.status = SubmissionStatus.PENDING_SUPERVISOR;
+            } else {
+                 submission.status = SubmissionStatus.APPROVED;
+            }
+        } else {
+             submission.status = SubmissionStatus.APPROVED;
+        }
+    } else if (approverRole === UserRole.SUPERVISOR) {
+        if (currentStatus === SubmissionStatus.PENDING_SUPERVISOR) {
+             if (flow === ApprovalFlow.SUPERVISOR_ONLY) {
+                 submission.status = SubmissionStatus.APPROVED;
+             } else if (flow === ApprovalFlow.SUPERVISOR_THEN_HR) {
+                 submission.status = SubmissionStatus.PENDING_HR;
+             } else if (flow === ApprovalFlow.HR_THEN_SUPERVISOR) {
+                 submission.status = SubmissionStatus.APPROVED;
+             }
+        }
+    }
+
+    return this.submissionRepo.save(submission);
+  }
+
+  async rejectSubmission(id: number, reason: string) {
+      const submission = await this.submissionRepo.findOne({ where: { id } });
+      if (!submission) throw new NotFoundException('Submission not found');
+      
+      submission.status = SubmissionStatus.REJECTED;
+      return this.submissionRepo.save(submission);
+  }
+
+  // Optional: Backfill method for missing userIds
+  async backfillUserIdFromRelation(batchSize = 500) {
+    while (true) {
+      const items: FormSubmission[] = await this.submissionRepo.find({
+        where: { userId: null },
+        relations: ['user'],
+        take: batchSize,
+      });
 
 			if (items.length === 0) break;
 

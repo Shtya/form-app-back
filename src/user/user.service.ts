@@ -7,12 +7,40 @@ import { UserRole } from 'entities/user.entity';
 import * as argon from 'argon2';
 import { ListUsersDto } from './user.dto';
 
+import { HttpService } from '@nestjs/axios';
+import { firstValueFrom } from 'rxjs';
+
 @Injectable()
 export class UserService {
 	constructor(
 		@InjectRepository(User)
 		private readonly userRepo: Repository<User>,
+        private readonly httpService: HttpService,
 	) { }
+
+    async checkEmployeeStatus(email: string): Promise<any> {
+        try {
+            console.log(`Checking employee status for: ${email}`);
+            const response = await firstValueFrom(
+                this.httpService.get(
+                    `${process.env.NEST_PUBLIC_BASE_URL_2}/employees/by-email/${email}`,
+                    {
+                        headers: {
+                            'Authorization': `Bearer ${process.env.TOKENJWT_SECRET}`,
+                        },
+                    },
+                ),
+            );
+            return response.data;
+        } catch (error) {
+            console.error('Failed to check employee status:', error.response?.data || error.message);
+            // If 404, usually means not found or not active? 
+            // Return null or throw depending on requirement. 
+            // Based on user request, we want to know if active. 
+            // If request fails, we can assume inactive or return error info.
+            return { isActive: false, error: error.message }; 
+        }
+    }
 
 	// EDIT the buildUsersQB method in user.service.ts:
 	private buildUsersQB(dto: ListUsersDto, currentUser?: User): SelectQueryBuilder<User> {

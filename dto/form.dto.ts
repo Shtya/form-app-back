@@ -2,6 +2,8 @@ import { IsArray, IsBoolean, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString,
 import { Type } from 'class-transformer';
 import { FieldType } from '../entities/form-field.entity';
 
+import { ApprovalFlow } from 'entities/forms.entity';
+
 export class FormFieldDto {
   @IsOptional()
   @IsNumber()
@@ -47,6 +49,15 @@ export class CreateFormDto {
   @IsString()
   @IsOptional()
   description?: string;
+
+  @IsString()
+  @IsOptional()
+  @IsEnum(['project', 'employee_request'])
+  type?: 'project' | 'employee_request';
+
+  @IsOptional()
+  @IsEnum(ApprovalFlow)
+  approvalFlow?: ApprovalFlow;
 
   @IsArray()
   @ValidateNested({ each: true })
