@@ -50,8 +50,12 @@ export class FormController {
 	}
 
 	@Get()
-	async getAllForms(@Query('page') page: number = 1, @Query('limit') limit: number = 10,) {
-		return this.formService.getAllForms(page|| 1 , limit || 100);
+	async getAllForms(
+		@Query('page') page: number = 1,
+		@Query('limit') limit: number = 10,
+		@Query('type') type?: string,
+	) {
+		return this.formService.getAllForms(page || 1, limit || 100, type);
 	}
 
 	@Get("/supervisor")

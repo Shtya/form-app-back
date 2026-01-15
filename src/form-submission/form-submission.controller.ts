@@ -17,16 +17,24 @@ export class FormSubmissionController {
 	}
 
 	@Get()
-	getAll(@Req() req: any, @Query('page') page = '1', @Query('limit') limit = '10', @Query('form_id') form_id?: string, @Query('project_id') project_id?: string , @Query('search') search?: string,) {
+	getAll(
+		@Req() req: any,
+		@Query('page') page = '1',
+		@Query('limit') limit = '10',
+		@Query('form_id') form_id?: string,
+		@Query('project_id') project_id?: string,
+		@Query('type') type?: string,
+		@Query('search') search?: string
+	) {
 		const user = req.user;
-
+		console.log('Fetching submissions with type:', type);
 		if (user.role === 'admin') {
-			return this.submissionService.findAllForAdmin(+page, +limit, form_id, project_id  , search);
+			return this.submissionService.findAllForAdmin(+page, +limit, form_id, project_id, type, search);
 		} else if (user.role === 'supervisor') {
 			// Supervisor sees submissions from their forms (forms with adminId = supervisor's id)
-			return this.submissionService.findAllForSupervisor(+page, +limit, user.id, form_id, project_id);
+			return this.submissionService.findAllForSupervisor(+page, +limit, user.id, form_id, project_id, type);
 		} else {
-			return this.submissionService.findAllByUser(user.id); // Regular user sees only their own
+			return this.submissionService.findAllByUser(user.id, type, search); // Regular user sees only their own
 		}
 	}
 
@@ -70,4 +78,14 @@ export class FormSubmissionController {
 		}
 		return this.submissionService.bulkCreateSubmissions(body.submissions);
 	}
+
+    @Patch(':id/approve')
+    async approve(@Req() req: any, @Param('id') id: string) {
+        return this.submissionService.approveSubmission(+id, req.user.role);
+    }
+
+    @Patch(':id/reject')
+    async reject(@Req() req: any, @Param('id') id: string, @Body('reason') reason: string) {
+        return this.submissionService.rejectSubmission(+id, reason);
+    }
 }

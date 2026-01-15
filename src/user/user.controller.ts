@@ -38,6 +38,14 @@ export class UserController {
 		res.send(csv);
 	}
 
+	@Get('employee-status/:email')
+    // Anyone logged in can check? Or only the user themselves?
+    // Let's allow authenticated users to check their own status or others if needed.
+    // For now, no specific Role restriction other than login (AuthGuard is on Controller).
+	async checkEmployeeStatus(@Param('email') email: string) {
+		return this.userService.checkEmployeeStatus(email);
+	}
+
 	@Roles(UserRole.ADMIN, UserRole.SUPERVISOR)
 	@Get(':id')
 	async getUser(@Param('id') id: string) {

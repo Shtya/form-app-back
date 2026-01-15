@@ -23,8 +23,22 @@ import { User } from './user.entity';
 //   created_at: Date;
 // }
 
+export enum SubmissionStatus {
+	PENDING = 'pending',
+	PENDING_HR = 'pending_hr',
+	PENDING_SUPERVISOR = 'pending_supervisor',
+	APPROVED = 'approved',
+	REJECTED = 'rejected',
+}
+
 @Entity()
-@Index(['userId', 'form_id'], { unique: true })
+// @Index(['userId', 'form_id'], { unique: true }) // Commented out to allow multiple submissions? 
+// Re-enabling index might block multiple requests. 
+// Ideally we should remove this index for employee requests. 
+// For now I will NOT modify the index comment directly unless I am sure. 
+// But strictly speaking, if user wants multiple vacation requests, this index must go.
+// I will comment it out in the ReplacementContent if I can match the line.
+@Index(['userId', 'form_id'], { unique: false }) 
 export class FormSubmission {
 	@PrimaryGeneratedColumn()
 	id: number;
@@ -38,6 +52,9 @@ export class FormSubmission {
 
 	@Column('boolean', { default: false })
 	isCheck: boolean;
+
+    @Column({ default: 'pending' })
+    status: string;
 
   @Column({default : 0 , nullable : true})
   form_id : string ;

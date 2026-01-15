@@ -92,6 +92,8 @@ export class FormService {
 			title: dto.title,
 			description: dto.description,
 			adminId: adminId,
+			type: dto.type || 'project',
+			approvalFlow: dto.approvalFlow,
 		});
 
 		const savedForm = await this.formRepository.save(form);
@@ -124,6 +126,8 @@ export class FormService {
 		// 2. تحديث بيانات النموذج
 		form.title = dto.title;
 		form.description = dto.description;
+		if (dto.type) form.type = dto.type;
+        if (dto.approvalFlow) form.approvalFlow = dto.approvalFlow;
 
 		// 3. التأكد من أن كل حقل مرسل يحتوي على id
 		for (const fieldDto of dto.fields) {
@@ -172,13 +176,27 @@ export class FormService {
 		};
 	}
 
-	async getAllForms(page = 1, limit = 10) {
+	async getAllForms(page = 1, limit = 10, type?: string) {
 		// Convert to numbers to avoid TypeORM error
-		const pageNum = Number(page);
-		const limitNum = Number(limit);
+		const pageNum = Number(page) || 1;
+		const limitNum = Number(limit) || 10;
+
+		const whereCondition: any = { adminId: IsNull() };
+		if (type) {
+			whereCondition.type = type;
+		} else {
+            // If no type specified, default to 'project' or show all? 
+            // Existing behavior was showing all admin forms. 
+            // Better to show only 'project' if type is not passed? 
+            // Or maybe existing forms don't have type set yet (null)?
+            // The column has default 'project', so new ones will have it. Old ones might need migration if DB is not dropped.
+            // But Assuming existing behavior should be preserved.
+            // If I filter by type: 'project', I might miss old ones if default wasn't applied to existing rows (sqlite/postgres differ).
+            // Let's assume we want to support filtering.
+        }
 
 		const [results, total] = await this.formRepository.findAndCount({
-			where: { adminId: IsNull() }, // Only forms where adminId IS NULL
+			where: whereCondition, // Only forms where adminId IS NULL
 			relations: ['fields'],
 			skip: (pageNum - 1) * limitNum,
 			take: limitNum,
@@ -262,7 +280,7 @@ export class FormService {
 				required: field.required,
 				options: field.options,
 				order: field.order ?? index,
-				length: field.length,
+				length: field.length ? Number(field.length) : null,
 				form,
 			}),
 		);
