@@ -30,22 +30,42 @@ export class FormSubmissionService {
 		});
 		if (!user) throw new NotFoundException('User not found');
 
-    const existing = await this.submissionRepo.findOne({
-      where: { user: { id: userId , } }
+		const form = await this.formRepo.findOne({
+			where: { id: parseInt(dto.form_id)},
+			relations: ['fields'],
+			
+		});
+		const formCheck= await this.formRepo.findOne({
+			where: { id: parseInt(dto.form_id),type: 'project'},
+			relations: ['fields'],
+			
+		});
+		if (!form) throw new NotFoundException('Form not found');
+
+    // Check if the user has already submitted this specific form
+    const existingSubmission = await this.submissionRepo.findOne({
+      where: { user: { id: userId }, form_id: `${formCheck.id}` }
     });
-    const form = await this.formRepo.findOne({ 
-        where: { id: parseInt(dto.form_id) },
-        relations: ['fields']
-    });
-    if (!form) throw new NotFoundException('Form not found');
-    
-    if (existing && form.type === 'project') {
+
+    if (existingSubmission) {
       throw new BadRequestException('You have already submitted this form.');
     }
 
-    // Fetch form to check approval flow
-    let status = SubmissionStatus.PENDING;
+    // If the form is of type 'project', ensure the user hasn't submitted any project form before
+    if (form.type === 'project') {
+      const hasProjectSubmission = await this.submissionRepo
+        .createQueryBuilder('submission')
+        .leftJoin(Form, 'form', 'CAST(form.id AS TEXT) = submission.form_id')
+        .where('submission.userId = :userId', { userId })
+        .andWhere('form.type = :type', { type: 'project' })
+        .getOne();
 
+      if (hasProjectSubmission) {
+        throw new BadRequestException('You have already submitted a project form.');
+      }
+    }
+
+		let status = SubmissionStatus.PENDING;
 
     const submission = this.submissionRepo.create({
       user,
@@ -347,7 +367,7 @@ export class FormSubmissionService {
 	}
 
 	async deleteSubmission(id: number) {
-		const found = await this.submissionRepo.findOne({
+		const found = await this.submissionRepo.find({
 			where: { id }
 		});
 
