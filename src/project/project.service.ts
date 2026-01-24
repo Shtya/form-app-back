@@ -8,6 +8,8 @@ import { CreateProjectDto, UpdateProjectDto } from 'dto/project.dto';
 import { Project } from 'entities/project.entity';
 import { IsNull, Repository } from 'typeorm';
 import { User, UserRole } from '../../entities/user.entity';
+import { HttpService } from '@nestjs/axios';
+import { firstValueFrom } from 'rxjs';
 
 @Injectable()
 export class ProjectsService {
@@ -15,6 +17,7 @@ export class ProjectsService {
 		@InjectRepository(Project)
 		private readonly projectRepository: Repository<Project>,
 		@InjectRepository(User) private readonly userRepo: Repository<User>,
+		private readonly httpService: HttpService,
 	) { }
 
 
@@ -144,5 +147,57 @@ async findAllForForm( user?: any) {
 		if (!project) throw new NotFoundException('Project not found');
 		await this.projectRepository.softDelete(id); // ✅ حذف ناعم
 		return { message: 'Project soft deleted' };
+	}
+
+  async getProjectNames() {
+    return this.projectRepository.find({
+      select: ['id', 'name'],
+      where: { deleted_at: IsNull() },
+      order: { name: 'ASC' },
+    });
+  }
+
+	async syncToCrm() {
+		const projects = await this.projectRepository.find({
+			where: { deleted_at: IsNull() }, 
+		});
+
+		let successCount = 0;
+		let failCount = 0;
+		const errors = [];
+
+		for (const project of projects) {
+			try {
+				const projectPayload = {
+					clientName: project.name,
+
+				};
+
+				await firstValueFrom(
+					this.httpService.post(
+						`${process.env.NEST_PUBLIC_BASE_URL_2}/clients`,
+						projectPayload,
+						{
+							headers: {
+								'Authorization': `Bearer ${process.env.TOKENJWT_SECRET}`,
+								'Content-Type': 'application/json',
+							},
+						},
+					),
+				);
+				successCount++;
+			} catch (error) {
+				failCount++;
+				errors.push({ id: project.id, name: project.name, error: error.message });
+			}
+		}
+
+		return {
+			message: 'Sync completed',
+			total: projects.length,
+			success: successCount,
+			failed: failCount,
+			errors,
+		};
 	}
 }
