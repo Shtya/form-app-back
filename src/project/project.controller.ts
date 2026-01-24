@@ -50,6 +50,7 @@ export class ProjectsController {
 		return this.projectsService.getUsersByProject(id);
 	}
 
+
 	@Get(':id')
 	findOne(@Param('id', ParseIntPipe) id: number) {
 		return this.projectsService.findOne(id);
