@@ -28,6 +28,14 @@ export class ProjectsController {
 		const user = req.user;
 		return this.projectsService.findAll(+page, +limit, user);
 	}
+
+	@Post('sync-crm')
+	@UseGuards(AuthGuard)
+	@Roles(UserRole.ADMIN, UserRole.SUPERVISOR)
+	syncToCrm() {
+		return this.projectsService.syncToCrm();
+	}
+
 @Get('for-form')
 
 	findAllForform(
