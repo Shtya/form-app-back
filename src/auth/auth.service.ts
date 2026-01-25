@@ -3,7 +3,7 @@ import { JwtService } from '@nestjs/jwt';
 import * as argon from 'argon2';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User, UserRole } from 'entities/user.entity';
-import { Repository } from 'typeorm';
+import { ILike, Repository } from 'typeorm';
 import { CreateUserBulkDto, CreateUserDto } from 'dto/user.dto';
 import * as crypto from 'crypto';
 import { Project } from 'entities/project.entity';
@@ -48,9 +48,10 @@ export class AuthService {
 		const encryptedPassword = this.encrypt(password);
 
 		// 🟢 تحقق من وجود المشروع
-		const project = await this.projectRepository.findOne({ where: { id: dto.projectId } });
+		let project = await this.projectRepository.findOne({ where: { name: ILike(`%${dto.projectName}%`) } });
 		if (!project) {
-			throw new BadRequestException('Project not found');
+			const newproject = await this.projectRepository.save({ name: dto.projectName });
+			project = newproject;
 		}
 
 		let created_by: number | null = null;
