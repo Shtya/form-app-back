@@ -221,7 +221,7 @@ export class FormSubmissionService {
       .leftJoinAndSelect('user.project', 'project')
       .leftJoin(Form, 'form', 'CAST(form.id AS TEXT) = submission.form_id')
       .addSelect(['form.id', 'form.adminId', 'form.type'])
-      .where('form.adminId IS NULL')
+      // .where('form.adminId IS NULL')
       .orderBy('submission.created_at', 'DESC')
       .skip((page - 1) * limit)
       .take(limit);

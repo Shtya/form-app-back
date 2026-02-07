@@ -181,7 +181,7 @@ export class FormService {
 		const pageNum = Number(page) || 1;
 		const limitNum = Number(limit) || 10;
 
-		const whereCondition: any = { adminId: IsNull() };
+		const whereCondition: any = {  };
 		if (type) {
 			whereCondition.type = type;
 		} else {
@@ -196,7 +196,7 @@ export class FormService {
         }
 
 		const [results, total] = await this.formRepository.findAndCount({
-			where: whereCondition, // Only forms where adminId IS NULL
+			where: whereCondition,  
 			relations: ['fields'],
 			skip: (pageNum - 1) * limitNum,
 			take: limitNum,
