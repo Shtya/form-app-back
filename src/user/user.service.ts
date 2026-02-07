@@ -73,7 +73,7 @@ export class UserService {
 				createdBy: currentUser.id
 			});
 		} else if (currentUser.role === UserRole.ADMIN) {
-			qb.andWhere('u.created_by IS NULL');
+			// qb.andWhere('u.created_by IS NULL');
 		} else {
 			// Regular user (if they can access) - show only admin-created users
 			qb.andWhere('u.created_by IS NULL');

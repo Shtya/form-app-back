@@ -27,7 +27,6 @@ export class FormSubmissionController {
 		@Query('search') search?: string
 	) {
 		const user = req.user;
-		console.log('Fetching submissions with type:', type);
 		if (user.role === 'admin') {
 			return this.submissionService.findAllForAdmin(+page, +limit, form_id, project_id, type, search);
 		} else if (user.role === 'supervisor') {
