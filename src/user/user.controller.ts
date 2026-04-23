@@ -1,4 +1,5 @@
-import { Controller, Get, Param, Patch, Body, Delete, UseGuards, Req, Query, Res } from '@nestjs/common';
+import { Controller, Get, Param, Patch, Body, Delete, UseGuards, Req, Query, Res, Post, UseInterceptors, UploadedFile } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { UserService } from './user.service';
 import { UpdateUserDto } from 'dto/user.dto';
 import { AuthGuard } from '../auth/auth.guard';
@@ -67,5 +68,21 @@ export class UserController {
 	@Delete(':id')
 	async deleteUser(@Param('id') id: string) {
 		return this.userService.deleteUser(+id);
+	}
+
+	@Roles(UserRole.ADMIN, UserRole.SUPERVISOR)
+	@Post('import')
+	@UseInterceptors(FileInterceptor('file'))
+	async importUsers(
+		@Body() body: { rows?: any[]; projectId?: string },
+		@UploadedFile() file?: any
+	) {
+		const projectId = body.projectId ? parseInt(body.projectId) : undefined;
+		
+		if (file) {
+			return this.userService.importUsersFromFile(file, projectId);
+		}
+		
+		return this.userService.importUsers(body.rows || [], projectId);
 	}
 }
