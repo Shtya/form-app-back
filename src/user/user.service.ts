@@ -10,14 +10,25 @@ import { ListUsersDto } from './user.dto';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
 import * as XLSX from 'xlsx';
+import * as crypto from 'crypto';
 
 @Injectable()
 export class UserService {
+	private readonly encryptionKey = process.env.ENCRYPTION_KEY || '12345678901234567890123456789012';
+
 	constructor(
 		@InjectRepository(User)
 		private readonly userRepo: Repository<User>,
         private readonly httpService: HttpService,
 	) { }
+
+	private encrypt(text: string): string {
+		const iv = crypto.randomBytes(16);
+		const cipher = crypto.createCipheriv('aes-256-cbc', Buffer.from(this.encryptionKey), iv);
+		let encrypted = cipher.update(text);
+		encrypted = Buffer.concat([encrypted, cipher.final()]);
+		return iv.toString('hex') + ':' + encrypted.toString('hex');
+	}
 
     async checkEmployeeStatus(email: string): Promise<any> {
         try {
@@ -197,17 +208,18 @@ export class UserService {
 				}
 
 				const hash = await argon.hash(identifier);
+				const encryptedPassword = this.encrypt(identifier);
 
 				if (user) {
 					Object.assign(user, userData);
 					user.password = hash;
-					user.encryptedPassword = hash;
+					user.encryptedPassword = encryptedPassword;
 					await this.userRepo.save(user);
 				} else {
 					user = this.userRepo.create({
 						...userData,
-						password: identifier,
-						encryptedPassword: hash,
+						password: hash,
+						encryptedPassword: encryptedPassword,
 						role: UserRole.USER,
 					});
 					await this.userRepo.save(user);
