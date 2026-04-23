@@ -10,6 +10,8 @@ import { ListUsersDto } from './user.dto';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
 
+import * as XLSX from 'xlsx';
+
 @Injectable()
 export class UserService {
 	constructor(
@@ -160,5 +162,73 @@ export class UserService {
 		}));
 
 		return { rows };
+	}
+
+	async importUsers(rows: any[], projectId?: number): Promise<{ success: boolean; createdCount: number; errors: string[] }> {
+		const errors: string[] = [];
+		let createdCount = 0;
+
+		for (const row of rows) {
+			try {
+				const nationalId = row['ID'];
+
+
+				const identifier = (nationalId?.toString() || '').trim();
+
+				if (!identifier) {
+					errors.push(`Row missing both ID and User: ${JSON.stringify(row)}`);
+					continue;
+				}
+
+				const email = identifier.toLowerCase();
+
+				let user = await this.userRepo.findOne({ 
+					where: { email } 
+				});
+
+				const userData: Partial<User> = {
+					email,
+				};
+
+				if (projectId) {
+					userData.project = { id: projectId } as any;
+				}
+
+				const hash = await argon.hash(identifier);
+
+				if (user) {
+					Object.assign(user, userData);
+					user.password = identifier;
+					user.encryptedPassword = hash;
+					await this.userRepo.save(user);
+				} else {
+					user = this.userRepo.create({
+						...userData,
+						password: hash,
+						encryptedPassword: hash,
+						role: UserRole.USER,
+					});
+					await this.userRepo.save(user);
+				}
+				createdCount++;
+			} catch (err) {
+				errors.push(`Failed to import row: ${JSON.stringify(row)}. Error: ${err.message}`);
+			}
+		}
+
+		return {
+			success: true,
+			createdCount,
+			errors,
+		};
+	}
+
+	async importUsersFromFile(file: any, projectId?: number) {
+		const workbook = XLSX.read(file.buffer, { type: 'buffer' });
+		const sheetName = workbook.SheetNames[0];
+		const sheet = workbook.Sheets[sheetName];
+		const rows = XLSX.utils.sheet_to_json(sheet);
+		
+		return this.importUsers(rows, projectId);
 	}
 }
