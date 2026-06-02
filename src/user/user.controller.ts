@@ -13,14 +13,14 @@ import { ListUsersDto } from './user.dto';
 export class UserController {
 	constructor(private readonly userService: UserService) { }
 
-	@Roles(UserRole.ADMIN, UserRole.SUPERVISOR)
+	@Roles(UserRole.ADMIN, UserRole.SUPERVISOR, UserRole.RPG_ADMIN)
 	@Get()
 	async getAllUsers(@Query() query: ListUsersDto, @Req() req: any) {
 		const currentUser = req.user; // Get current user
 		return this.userService.findAll(query, currentUser);
 	}
 
-	@Roles(UserRole.ADMIN, UserRole.SUPERVISOR)
+	@Roles(UserRole.ADMIN, UserRole.SUPERVISOR, UserRole.RPG_ADMIN)
 	async exportUsers(@Query() query: ListUsersDto, @Res() res: any, @Req() req: any) {
 		const currentUser = req.user;
 		const raw = Number((query as any).limit);
@@ -44,7 +44,7 @@ export class UserController {
 		return this.userService.checkEmployeeStatus(email);
 	}
 
-	@Roles(UserRole.ADMIN, UserRole.SUPERVISOR)
+	@Roles(UserRole.ADMIN, UserRole.SUPERVISOR, UserRole.RPG_ADMIN)
 	@Get(':id')
 	async getUser(@Param('id') id: string) {
 		return this.userService.findOne(+id);
@@ -56,18 +56,18 @@ export class UserController {
 	}
 
 	@Patch(':id')
-	@Roles(UserRole.ADMIN, UserRole.SUPERVISOR) // Assuming you have some role-based guard
+	@Roles(UserRole.ADMIN, UserRole.SUPERVISOR, UserRole.RPG_ADMIN) // Assuming you have some role-based guard
 	async updateUserById(@Param('id') userId: number, @Body() dto: UpdateUserDto, @Req() req: any) {
 		return this.userService.updateUser(userId, dto, req.user);
 	}
 
-	@Roles(UserRole.ADMIN, UserRole.SUPERVISOR)
+	@Roles(UserRole.ADMIN, UserRole.SUPERVISOR, UserRole.RPG_ADMIN)
 	@Delete(':id')
 	async deleteUser(@Param('id') id: string) {
 		return this.userService.deleteUser(+id);
 	}
 
-	@Roles(UserRole.ADMIN, UserRole.SUPERVISOR)
+	@Roles(UserRole.ADMIN, UserRole.SUPERVISOR, UserRole.RPG_ADMIN)
 	@Post('import')
 	@UseInterceptors(FileInterceptor('file'))
 	async importUsers(

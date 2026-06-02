@@ -7,6 +7,7 @@ export enum UserRole {
 	ADMIN = 'admin',
 	SUPERVISOR = 'supervisor',
 	USER = 'user',
+	RPG_ADMIN = 'rpg_admin',
 }
 
 @Entity()

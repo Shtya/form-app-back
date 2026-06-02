@@ -57,7 +57,7 @@ export class AuthService {
 		let created_by: number | null = null;
 
 		if (creator) {
-			if (creator.role === UserRole.SUPERVISOR) {
+			if (creator.role === UserRole.SUPERVISOR || creator.role === UserRole.RPG_ADMIN) {
 				created_by = creator.id;
 			} else if (creator.role === UserRole.ADMIN) {
 				created_by = null;
@@ -93,7 +93,7 @@ export class AuthService {
 		let created_by: number | null = null;
 
 		if (creator) {
-			if (creator.role === UserRole.SUPERVISOR) {
+			if (creator.role === UserRole.SUPERVISOR || creator.role === UserRole.RPG_ADMIN) {
 				created_by = creator.id;
 			} else if (creator.role === UserRole.ADMIN) {
 				created_by = null;
@@ -202,8 +202,8 @@ export class AuthService {
 			throw new UnauthorizedException('Requesting user not found');
 		}
 
-		// Only allow admins to access this functionality
-		if (requestingUser.role !== UserRole.ADMIN) {
+		// Only admin and rpg_admin can access this functionality
+		if (requestingUser.role !== UserRole.ADMIN && requestingUser.role !== UserRole.RPG_ADMIN) {
 			throw new UnauthorizedException('Insufficient permissions');
 		}
 

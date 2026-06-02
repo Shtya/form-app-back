@@ -290,6 +290,53 @@ export class FormSubmissionService {
 		};
 	}
 
+	async findAllForRpgAdmin(page = 1, limit = 10, rpgAdminUserId: number, form_id?: string, type?: string, search?: string) {
+		// Load RPG Admin's project
+		const rpgAdmin = await this.userRepo.findOne({
+			where: { id: rpgAdminUserId },
+			relations: ['project'],
+		});
+		const rpgProjectId = rpgAdmin?.project?.id;
+
+		const query = this.submissionRepo
+			.createQueryBuilder('submission')
+			.leftJoinAndSelect('submission.user', 'user')
+			.leftJoinAndSelect('user.project', 'project')
+			.leftJoin(Form, 'form', 'CAST(form.id AS TEXT) = submission.form_id')
+			.addSelect(['form.id', 'form.adminId', 'form.type'])
+			.orderBy('submission.created_at', 'DESC')
+			.skip((page - 1) * limit)
+			.take(limit);
+
+		if (rpgProjectId) {
+			query.andWhere('project.id = :rpgProjectId', { rpgProjectId });
+		}
+
+		if (form_id) {
+			query.andWhere('submission.form_id = :form_id', { form_id });
+		}
+
+		if (type) {
+			query.andWhere('form.type = :type', { type });
+		}
+
+		if (search) {
+			query.andWhere(
+				`(user.email ILIKE :q OR project.name ILIKE :q OR CAST(submission.answers AS TEXT) ILIKE :q)`,
+				{ q: `%${search}%` }
+			);
+		}
+
+		const [data, total] = await query.getManyAndCount();
+
+		return {
+			data,
+			total,
+			page,
+			lastPage: Math.ceil(total / limit),
+		};
+	}
+
 	async findAll(page = 1, limit = 10, form_id?: string, project_id?: string) {
 		const query = this.submissionRepo
 			.createQueryBuilder('submission')

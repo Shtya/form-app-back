@@ -54,25 +54,21 @@ export class UserService {
         }
     }
 
-	// EDIT the buildUsersQB method in user.service.ts:
-	private buildUsersQB(dto: ListUsersDto, currentUser?: User): SelectQueryBuilder<User> {
+	private buildUsersQB(dto: ListUsersDto, currentUser?: User, rpgProjectId?: number): SelectQueryBuilder<User> {
 		const qb = this.userRepo
 			.createQueryBuilder('u')
 			.leftJoinAndSelect('u.formSubmissions', 'fs')
 			.leftJoinAndSelect('u.project', 'p')
 			.orderBy('u.id', 'DESC');
 
-		// SEARCH filter
 		if (dto.search) {
 			qb.andWhere(`(u.email ILIKE :q OR p.name ILIKE :q)`, { q: `%${dto.search}%` });
 		}
 
-		// ROLE filter
 		if (dto.role) {
 			qb.andWhere('u.role = :role', { role: dto.role });
 		}
 
-		// DATE RANGE filter
 		if (dto.from) {
 			qb.andWhere('u.created_at >= :from', { from: dto.from });
 		}
@@ -80,27 +76,37 @@ export class UserService {
 			qb.andWhere('u.created_at <= :to', { to: dto.to });
 		}
 
-		if (currentUser.role === UserRole.SUPERVISOR) {
-			qb.andWhere('(u.created_by = :createdBy)', {
-				createdBy: currentUser.id
-			});
+		if (currentUser.role === UserRole.RPG_ADMIN) {
+			// RPG Admin sees all users in their project
+			if (rpgProjectId) {
+				qb.andWhere('p.id = :rpgProjectId', { rpgProjectId });
+			}
+		} else if (currentUser.role === UserRole.SUPERVISOR) {
+			qb.andWhere('(u.created_by = :createdBy)', { createdBy: currentUser.id });
 		} else if (currentUser.role === UserRole.ADMIN) {
-			// qb.andWhere('u.created_by IS NULL');
+			// no filter — sees all users
 		} else {
-			// Regular user (if they can access) - show only admin-created users
 			qb.andWhere('u.created_by IS NULL');
 		}
-
 
 		return qb;
 	}
 
-	// EDIT the findAll method signature:
 	async findAll(dto: ListUsersDto, currentUser?: User): Promise<{ data: User[]; total: number; page: number; limit: number }> {
 		const page = dto.page ?? 1;
 		const limit = dto.limit ?? 10;
 
-		const qb = this.buildUsersQB(dto, currentUser) // Pass currentUser
+		// For RPG Admin: resolve their project_id so buildUsersQB can scope by project
+		let rpgProjectId: number | undefined;
+		if (currentUser?.role === UserRole.RPG_ADMIN) {
+			const rpgUser = await this.userRepo.findOne({
+				where: { id: currentUser.id },
+				relations: ['project'],
+			});
+			rpgProjectId = rpgUser?.project?.id;
+		}
+
+		const qb = this.buildUsersQB(dto, currentUser, rpgProjectId)
 			.skip((page - 1) * limit)
 			.take(limit);
 
@@ -120,13 +126,15 @@ export class UserService {
 	async updateUser(userId: number, dto: UpdateUserDto, currentUser: User): Promise<User> {
 		const user = await this.findOne(userId);
 
+		const canManage = currentUser.role === UserRole.ADMIN || currentUser.role === UserRole.RPG_ADMIN;
+
 		// Authorization check
-		if (userId !== currentUser.id && currentUser.role !== UserRole.ADMIN) {
+		if (userId !== currentUser.id && !canManage) {
 			throw new ForbiddenException('You are not allowed to update this user');
 		}
 
-		// Prevent non-admins from changing role
-		if (currentUser.role !== UserRole.ADMIN && dto.role) {
+		// Only ADMIN can change roles; RPG Admin cannot escalate privileges
+		if (!canManage && dto.role) {
 			delete dto.role;
 		}
 
@@ -151,11 +159,19 @@ export class UserService {
 		return Number.isFinite(n) && n > 0 ? Math.floor(n) : fallback;
 	}
 
-	// EDIT the export method signature:
 	async export(dto: ListUsersDto, limit: number, currentUser?: User): Promise<{ rows: any[] }> {
 		const MAX_EXPORT = Math.min(this.toPosInt(limit, 50000), 50000);
 
-		const qb = this.buildUsersQB({ ...dto }, currentUser); // Pass currentUser
+		let rpgProjectId: number | undefined;
+		if (currentUser?.role === UserRole.RPG_ADMIN) {
+			const rpgUser = await this.userRepo.findOne({
+				where: { id: currentUser.id },
+				relations: ['project'],
+			});
+			rpgProjectId = rpgUser?.project?.id;
+		}
+
+		const qb = this.buildUsersQB({ ...dto }, currentUser, rpgProjectId);
 		qb.take(MAX_EXPORT).skip(0);
 
 		const users = await qb.getMany();

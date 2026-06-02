@@ -29,11 +29,13 @@ export class FormSubmissionController {
 		const user = req.user;
 		if (user.role === 'admin') {
 			return this.submissionService.findAllForAdmin(+page, +limit, form_id, project_id, type, search);
+		} else if (user.role === 'rpg_admin') {
+			// RPG Admin sees all submissions for their project (scoped by project_id from their profile)
+			return this.submissionService.findAllForRpgAdmin(+page, +limit, user.id, form_id, type, search);
 		} else if (user.role === 'supervisor') {
-			// Supervisor sees submissions from their forms (forms with adminId = supervisor's id)
 			return this.submissionService.findAllForSupervisor(+page, +limit, user.id, form_id, project_id, type);
 		} else {
-			return this.submissionService.findAllByUser(user.id, type, search); // Regular user sees only their own
+			return this.submissionService.findAllByUser(user.id, type, search);
 		}
 	}
 
@@ -46,7 +48,7 @@ export class FormSubmissionController {
 			throw new ForbiddenException('Submission not found');
 		}
 
-		if (user.role !== 'admin' && submission.user.id !== user.id) {
+		if (user.role !== 'admin' && user.role !== 'rpg_admin' && submission.user.id !== user.id) {
 			throw new ForbiddenException('You do not have permission to update this submission');
 		}
 
@@ -62,7 +64,7 @@ export class FormSubmissionController {
       throw new ForbiddenException('Submission not found');
     }
 
-    if (user.role !== 'admin' && submission.user.id !== user.id) {
+    if (user.role !== 'admin' && user.role !== 'rpg_admin' && submission.user.id !== user.id) {
       throw new ForbiddenException('You do not have permission to delete this submission');
     }
 
@@ -72,7 +74,7 @@ export class FormSubmissionController {
 	@Post('bulk-upload')
 	async bulkUpload(@Req() req: any, @Body() body: { submissions: Array<{ userId: number; answers: Record<string, any>; form_id: string }> }) {
 		const user = req.user;
-		if (user.role !== 'admin' && user.role !== 'supervisor') {
+		if (user.role !== 'admin' && user.role !== 'supervisor' && user.role !== 'rpg_admin') {
 			throw new ForbiddenException('Only admins and supervisors can bulk upload submissions');
 		}
 		return this.submissionService.bulkCreateSubmissions(body.submissions);

@@ -16,19 +16,19 @@ export class AuthController {
 		return this.authService.signin(body.email, body.password);
 	}
 
-	// EDIT the create-user endpoint:
 	@UseGuards(AuthGuard, RolesGuard)
+	@Roles(UserRole.ADMIN, UserRole.SUPERVISOR, UserRole.RPG_ADMIN)
 	@Post('create-user')
 	async createUser(@Body() dto: CreateUserDto, @Req() req: any) {
-		const currentUser = req.user; // Get who is creating the user
+		const currentUser = req.user;
 		return this.authService.createUser(dto, currentUser);
 	}
 
-	// EDIT the bulk create endpoint:
 	@UseGuards(AuthGuard, RolesGuard)
+	@Roles(UserRole.ADMIN, UserRole.SUPERVISOR, UserRole.RPG_ADMIN)
 	@Post('create-users-bulk')
 	async createUsersBulk(@Body() dto: any, @Req() req: any) {
-		const currentUser = req.user; // Get who is creating users
+		const currentUser = req.user;
 		return this.authService.createUsersBulk(dto.users, currentUser);
 	}
 
