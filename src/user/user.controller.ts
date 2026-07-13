@@ -21,6 +21,7 @@ export class UserController {
 	}
 
 	@Roles(UserRole.ADMIN, UserRole.SUPERVISOR, UserRole.RPG_ADMIN)
+	@Get('export')
 	async exportUsers(@Query() query: ListUsersDto, @Res() res: any, @Req() req: any) {
 		const currentUser = req.user;
 		const raw = Number((query as any).limit);
