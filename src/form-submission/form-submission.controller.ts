@@ -39,6 +39,24 @@ export class FormSubmissionController {
 		}
 	}
 
+
+	@Get(':id')
+	async getOne(@Req() req: any, @Param('id') id: string) {
+		const user = req.user;
+		const submission = await this.submissionService.findOne(+id);
+
+		if (!submission) {
+			throw new ForbiddenException('Submission not found');
+		}
+
+		// Basic access control
+		if (user.role !== 'admin' && user.role !== 'rpg_admin' && user.role !== 'supervisor' && submission.user.id !== user.id) {
+			throw new ForbiddenException('You do not have permission to view this submission');
+		}
+
+		return submission;
+	}
+
 	@Patch(':id')
 	async update(@Req() req: any, @Param('id') id: string, @Body() dto: any) {
 		const user = req.user;
