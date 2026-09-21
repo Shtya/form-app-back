@@ -89,3 +89,52 @@ describe("FormSubmissionService.create", () => {
     expect(submissionRepo.save).not.toHaveBeenCalled();
   });
 });
+
+describe("FormSubmissionService.resendToCrm", () => {
+  it("updates the linked CRM employee instead of creating a duplicate", async () => {
+    const submission = {
+      id: 91,
+      employeeId: "employee-1",
+      form_id: "12",
+      answers: { "البريد-الإلكتروني---email": "applicant@example.com" },
+      user: { project: { id: 31, name: "Logitech" } },
+    };
+    const submissionRepo = {
+      findOne: jest.fn().mockResolvedValue(submission),
+      save: jest.fn().mockResolvedValue(submission),
+    };
+    const formRepo = {
+      findOne: jest.fn().mockResolvedValue({
+        id: 12,
+        type: "candidate",
+        fields: [
+          {
+            key: "البريد-الإلكتروني---email",
+            label: "البريد الإلكتروني - Email",
+            type: "email",
+          },
+        ],
+      }),
+    };
+    const httpService = {
+      post: jest.fn(),
+      put: jest.fn().mockReturnValue(of({ data: { id: "employee-1" } })),
+    };
+    const service = new FormSubmissionService(
+      submissionRepo as any,
+      {} as any,
+      formRepo as any,
+      httpService as any,
+    );
+
+    await service.resendToCrm(91);
+
+    expect(httpService.put).toHaveBeenCalledWith(
+      expect.stringContaining("/employees/employee-1"),
+      expect.objectContaining({ personalInformation: expect.any(Array) }),
+      expect.any(Object),
+    );
+    expect(httpService.post).not.toHaveBeenCalled();
+    expect(submissionRepo.save).toHaveBeenCalledWith(submission);
+  });
+});
