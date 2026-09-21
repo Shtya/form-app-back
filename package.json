@@ -95,6 +95,11 @@
       "**/*.(t|j)s"
     ],
     "coverageDirectory": "../coverage",
-    "testEnvironment": "node"
+    "testEnvironment": "node",
+    "moduleNameMapper": {
+      "^entities/(.*)$": "<rootDir>/../entities/$1",
+      "^dto/(.*)$": "<rootDir>/../dto/$1",
+      "^src/(.*)$": "<rootDir>/$1"
+    }
   }
 }

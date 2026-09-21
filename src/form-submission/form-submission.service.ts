@@ -1,71 +1,79 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { HttpService } from '@nestjs/axios';
-import { firstValueFrom } from 'rxjs';
-import { In, Repository } from 'typeorm';
-import { FormSubmission, SubmissionStatus } from 'entities/form-submissions.entity';
-import { CreateFormSubmissionDto } from 'dto/form-submission.dto';
-import { User, UserRole } from 'entities/user.entity';
-import { Form, ApprovalFlow } from 'entities/forms.entity';
+import {
+  BadGatewayException,
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { HttpService } from "@nestjs/axios";
+import { firstValueFrom } from "rxjs";
+import { In, Repository } from "typeorm";
+import {
+  FormSubmission,
+  SubmissionStatus,
+} from "entities/form-submissions.entity";
+import { CreateFormSubmissionDto } from "dto/form-submission.dto";
+import { User, UserRole } from "entities/user.entity";
+import { Form, ApprovalFlow } from "entities/forms.entity";
 
 @Injectable()
 export class FormSubmissionService {
-	constructor(
-		@InjectRepository(FormSubmission)
-		private submissionRepo: Repository<FormSubmission>,
+  constructor(
+    @InjectRepository(FormSubmission)
+    private submissionRepo: Repository<FormSubmission>,
 
-		@InjectRepository(User)
-		private userRepo: Repository<User>,
+    @InjectRepository(User)
+    private userRepo: Repository<User>,
 
-		@InjectRepository(Form)
-		private formRepo: Repository<Form>,
+    @InjectRepository(Form)
+    private formRepo: Repository<Form>,
 
-		private readonly httpService: HttpService,
-	) { }
+    private readonly httpService: HttpService,
+  ) {}
 
-	async create(userId: number, dto: CreateFormSubmissionDto) {
-		const user = await this.userRepo.findOne({
-			where: { id: userId },
-			relations: ['project']
-		});
-		if (!user) throw new NotFoundException('User not found');
+  async create(userId: number, dto: CreateFormSubmissionDto) {
+    const user = await this.userRepo.findOne({
+      where: { id: userId },
+      relations: ["project"],
+    });
+    if (!user) throw new NotFoundException("User not found");
 
-		const form = await this.formRepo.findOne({
-			where: { id: parseInt(dto.form_id)},
-			relations: ['fields'],
-			
-		});
-		const formCheck= await this.formRepo.findOne({
-			where: { id: parseInt(dto.form_id),type: 'project'},
-			relations: ['fields'],
-			
-		});
-		if (!form) throw new NotFoundException('Form not found');
+    const form = await this.formRepo.findOne({
+      where: { id: parseInt(dto.form_id) },
+      relations: ["fields"],
+    });
+    const formCheck = await this.formRepo.findOne({
+      where: { id: parseInt(dto.form_id), type: "project" },
+      relations: ["fields"],
+    });
+    if (!form) throw new NotFoundException("Form not found");
 
     // Check if the user has already submitted this specific form
     const existingSubmission = await this.submissionRepo.findOne({
-      where: { user: { id: userId }, form_id: `${formCheck.id}` }
+      where: { user: { id: userId }, form_id: `${formCheck.id}` },
     });
 
     if (existingSubmission) {
-      throw new BadRequestException('You have already submitted this form.');
+      throw new BadRequestException("You have already submitted this form.");
     }
 
     // If the form is of type 'project', ensure the user hasn't submitted any project form before
-    if (form.type === 'project') {
+    if (form.type === "project") {
       const hasProjectSubmission = await this.submissionRepo
-        .createQueryBuilder('submission')
-        .leftJoin(Form, 'form', 'CAST(form.id AS TEXT) = submission.form_id')
-        .where('submission.userId = :userId', { userId })
-        .andWhere('form.type = :type', { type: 'project' })
+        .createQueryBuilder("submission")
+        .leftJoin(Form, "form", "CAST(form.id AS TEXT) = submission.form_id")
+        .where("submission.userId = :userId", { userId })
+        .andWhere("form.type = :type", { type: "project" })
         .getOne();
 
       if (hasProjectSubmission) {
-        throw new BadRequestException('You have already submitted a project form.');
+        throw new BadRequestException(
+          "You have already submitted a project form.",
+        );
       }
     }
 
-		let status = SubmissionStatus.PENDING;
+    let status = SubmissionStatus.PENDING;
 
     const submission = this.submissionRepo.create({
       user,
@@ -74,11 +82,9 @@ export class FormSubmissionService {
       status: status,
     });
 
-		const savedSubmission = await this.submissionRepo.save(submission);
-
     // --- CALL EXTERNAL SERVICE ---
     try {
-      if (form.type === 'employee_request') {
+      if (form.type === "employee_request") {
         const requestPayload = {
           title: form.title,
           description: form.description,
@@ -86,12 +92,12 @@ export class FormSubmissionService {
           projectId: user.project?.id,
           projectName: user.project?.name,
           employeeId: user.email, // using email as ID
-          fields: (form.fields || []).map(f => ({
+          fields: (form.fields || []).map((f) => ({
             key: f.key,
-            value: String(dto.answers[f.key] || ''),
+            value: String(dto.answers[f.key] || ""),
             label: f.label,
-            type: f.type
-          }))
+            type: f.type,
+          })),
         };
 
         const response = await firstValueFrom(
@@ -100,39 +106,46 @@ export class FormSubmissionService {
             requestPayload,
             {
               headers: {
-                'Authorization': `Bearer ${process.env.TOKENJWT_SECRET}`,
-                'Content-Type': 'application/json',
+                Authorization: `Bearer ${process.env.TOKENJWT_SECRET}`,
+                "Content-Type": "application/json",
               },
             },
           ),
         );
-        console.log('Request created externally:', response.data);
+        console.log("[CRM Import] Request created successfully");
       } else {
         // Handle Project/Employee Creation Flow
-        console.log('Form submission data (project):', dto);
+        console.log("[CRM Import] Preparing employee submission:", {
+          formId: dto.form_id,
+          answerCount: Object.keys(dto.answers || {}).length,
+        });
         const employeePayload = await this.mapFormToEmployee(dto, user);
-        
+
         // Inject Workflow Status for Project Forms
         if (form?.approvalFlow) {
-           const flow = form.approvalFlow;
-           if (flow === ApprovalFlow.HR_ONLY) {
-               employeePayload.workflowStatus = 'hr_review';
-               employeePayload.isVerifiedBySupervisor = true;
-           } else if (flow === ApprovalFlow.SUPERVISOR_ONLY) {
-               employeePayload.workflowStatus = 'supervisor_review';
-               employeePayload.isVerifiedByHr = true;
-           } else if (flow === ApprovalFlow.SUPERVISOR_THEN_HR) {
-               employeePayload.workflowStatus = 'supervisor_review';
-               employeePayload.isVerifiedBySupervisor = false;
-               employeePayload.isVerifiedByHr = false;
-           } else if (flow === ApprovalFlow.HR_THEN_SUPERVISOR) {
-               employeePayload.workflowStatus = 'hr_review'; // Start with HR
-               employeePayload.isVerifiedBySupervisor = false;
-               employeePayload.isVerifiedByHr = false;
-           }
+          const flow = form.approvalFlow;
+          if (flow === ApprovalFlow.HR_ONLY) {
+            employeePayload.workflowStatus = "hr_review";
+            employeePayload.isVerifiedBySupervisor = true;
+          } else if (flow === ApprovalFlow.SUPERVISOR_ONLY) {
+            employeePayload.workflowStatus = "supervisor_review";
+            employeePayload.isVerifiedByHr = true;
+          } else if (flow === ApprovalFlow.SUPERVISOR_THEN_HR) {
+            employeePayload.workflowStatus = "supervisor_review";
+            employeePayload.isVerifiedBySupervisor = false;
+            employeePayload.isVerifiedByHr = false;
+          } else if (flow === ApprovalFlow.HR_THEN_SUPERVISOR) {
+            employeePayload.workflowStatus = "hr_review"; // Start with HR
+            employeePayload.isVerifiedBySupervisor = false;
+            employeePayload.isVerifiedByHr = false;
+          }
         }
 
-        console.log(`Employee payload: ${JSON.stringify(employeePayload)}`);
+        console.log("[CRM Import] Sending employee payload:", {
+          projectId: employeePayload.ProjectId,
+          personalInformationCount:
+            employeePayload.personalInformation?.length ?? 0,
+        });
 
         const response = await firstValueFrom(
           this.httpService.post(
@@ -140,440 +153,470 @@ export class FormSubmissionService {
             employeePayload,
             {
               headers: {
-                'Authorization': `Bearer ${process.env.TOKENJWT_SECRET}`,
-                'Content-Type': 'application/json',
+                Authorization: `Bearer ${process.env.TOKENJWT_SECRET}`,
+                "Content-Type": "application/json",
               },
             },
           ),
         );
 
-        // Store employee ID in submission
-        if (response.data?.success && response.data?.data?.employee?.id) {
-          savedSubmission.employeeId = response.data.data.employee.id;
-          await this.submissionRepo.save(savedSubmission);
+        if (!response.data?.success) {
+          throw new Error("CRM rejected the employee import");
         }
-        console.log('Employee created:', response.data);
+
+        // Store the CRM employee ID before persisting the local submission.
+        if (response.data?.data?.employee?.id) {
+          submission.employeeId = response.data.data.employee.id;
+        }
+        console.log("[CRM Import] Employee created successfully");
       }
-    } catch (error) {
-      console.error('Failed to call external service:', error.response?.data || error.message);
+    } catch (error: any) {
+      console.error("[CRM Import] Failed:", error?.message || "Unknown error");
+      throw new BadGatewayException(
+        "Your form could not be sent to CRM. Please try again.",
+      );
     }
 
-		return savedSubmission;
-	}
+    return this.submissionRepo.save(submission);
+  }
 
-	private async mapFormToEmployee(dto: CreateFormSubmissionDto, user: User) {
-		const answers = dto.answers || {};
+  private async mapFormToEmployee(dto: CreateFormSubmissionDto, user: User) {
+    const answers = dto.answers || {};
 
-		// Fetch the form with its fields to get types and labels
-		const form = await this.formRepo.findOne({
-			where: { id: parseInt(dto.form_id) },
-			relations: ['fields']
-		});
+    // Fetch the form with its fields to get types and labels
+    const form = await this.formRepo.findOne({
+      where: { id: parseInt(dto.form_id) },
+      relations: ["fields"],
+    });
 
-		const personalInformation = [];
+    const personalInformation = [];
 
-		if (form && form.fields) {
-			form.fields.forEach(field => {
-				const value = answers[field.key];
-				// We only include fields that were actually answered
-				if (value !== undefined) {
-					personalInformation.push({
-						key: field.key,
-						value: value,
-						type: field.type,
-						label: field.label
-					});
-				}
-			});
-		} else {
-			// Fallback: if form or fields not found, just use raw answers as keys
-			Object.keys(answers).forEach(key => {
-				personalInformation.push({
-					key: key,
-					value: answers[key],
-					type: 'text', // default type
-					label: key
-				});
-			});
-		}
+    if (form && form.fields) {
+      form.fields.forEach((field) => {
+        const value = answers[field.key];
+        // We only include fields that were actually answered
+        if (value !== undefined) {
+          personalInformation.push({
+            key: field.key,
+            value: value,
+            type: field.type,
+            label: field.label,
+          });
+        }
+      });
+    } else {
+      // Fallback: if form or fields not found, just use raw answers as keys
+      Object.keys(answers).forEach((key) => {
+        personalInformation.push({
+          key: key,
+          value: answers[key],
+          type: "text", // default type
+          label: key,
+        });
+      });
+    }
 
-		const employeePayload: Record<string, any> = {
-			personalInformation
-		};
+    const employeePayload: Record<string, any> = {
+      personalInformation,
+    };
 
-		// Explicitly add project name from relation if available
-		if (user?.project?.name) {
-			employeePayload.projectName = user.project.name;
-		}
-		if (user.project?.id) {
-			employeePayload.ProjectId = user.project.id;
-		}
-		if (user.email) {
-			employeePayload.Email = user.email;
-		}
-		return employeePayload;
-	}
+    // Explicitly add project name from relation if available
+    if (user?.project?.name) {
+      employeePayload.projectName = user.project.name;
+    }
+    if (user.project?.id) {
+      employeePayload.ProjectId = user.project.id;
+    }
+    return employeePayload;
+  }
 
-  async findAllForAdmin(page = 1, limit = 10, form_id?: string, project_id?: string, type?: string,search?: string) {
+  async findAllForAdmin(
+    page = 1,
+    limit = 10,
+    form_id?: string,
+    project_id?: string,
+    type?: string,
+    search?: string,
+  ) {
     const query = this.submissionRepo
-      .createQueryBuilder('submission')
-      .leftJoinAndSelect('submission.user', 'user')
-      .leftJoinAndSelect('user.project', 'project')
-      .leftJoin(Form, 'form', 'CAST(form.id AS TEXT) = submission.form_id')
-      .addSelect(['form.id', 'form.adminId', 'form.type'])
+      .createQueryBuilder("submission")
+      .leftJoinAndSelect("submission.user", "user")
+      .leftJoinAndSelect("user.project", "project")
+      .leftJoin(Form, "form", "CAST(form.id AS TEXT) = submission.form_id")
+      .addSelect(["form.id", "form.adminId", "form.type"])
       // .where('form.adminId IS NULL')
-      .orderBy('submission.created_at', 'DESC')
+      .orderBy("submission.created_at", "DESC")
       .skip((page - 1) * limit)
       .take(limit);
 
-
-		if (form_id) {
-			query.andWhere('submission.form_id = :form_id', { form_id });
-		}
-
-		if (project_id) {
-			query.andWhere('project.id = :project_id', { project_id: +project_id });
-		}
-
-		if (search) {
-			query.andWhere(
-				`(user.email ILIKE :q OR project.name ILIKE :q OR CAST(submission.answers AS TEXT) ILIKE :q)`,
-				{ q: `%${search}%` }
-			);
-		}
-
-
-    if (type) {
-      query.andWhere('form.type = :type', { type });
+    if (form_id) {
+      query.andWhere("submission.form_id = :form_id", { form_id });
     }
-
-		const [data, total] = await query.getManyAndCount();
-
-		return {
-			data,
-			total,
-			page,
-			lastPage: Math.ceil(total / limit),
-		};
-	}
-
-  async findAllForSupervisor(page = 1, limit = 10, supervisorId: number, form_id?: string, project_id?: string, type?: string) {
-    const query = this.submissionRepo
-      .createQueryBuilder('submission')
-      .leftJoinAndSelect('submission.user', 'user')
-      .leftJoinAndSelect('user.project', 'project')
-      .leftJoin(Form, 'form', 'CAST(form.id AS TEXT) = submission.form_id')
-      .where('form.adminId = :supervisorId', { supervisorId })
-      .orderBy('submission.created_at', 'DESC')
-      .skip((page - 1) * limit)
-      .take(limit);
-
-		if (form_id) {
-			query.andWhere('submission.form_id = :form_id', { form_id });
-		}
 
     if (project_id) {
-      query.andWhere('project.id = :project_id', { project_id: +project_id });
+      query.andWhere("project.id = :project_id", { project_id: +project_id });
+    }
+
+    if (search) {
+      query.andWhere(
+        `(user.email ILIKE :q OR project.name ILIKE :q OR CAST(submission.answers AS TEXT) ILIKE :q)`,
+        { q: `%${search}%` },
+      );
     }
 
     if (type) {
-        query.andWhere('form.type = :type', { type });
+      query.andWhere("form.type = :type", { type });
     }
 
-		const [data, total] = await query.getManyAndCount();
+    const [data, total] = await query.getManyAndCount();
 
-		return {
-			data,
-			total,
-			page,
-			lastPage: Math.ceil(total / limit),
-		};
-	}
+    return {
+      data,
+      total,
+      page,
+      lastPage: Math.ceil(total / limit),
+    };
+  }
 
-	async findAllForRpgAdmin(page = 1, limit = 10, rpgAdminUserId: number, form_id?: string, type?: string, search?: string) {
-		// Load RPG Admin's project
-		const rpgAdmin = await this.userRepo.findOne({
-			where: { id: rpgAdminUserId },
-			relations: ['project'],
-		});
-		const rpgProjectId = rpgAdmin?.project?.id;
+  async findAllForSupervisor(
+    page = 1,
+    limit = 10,
+    supervisorId: number,
+    form_id?: string,
+    project_id?: string,
+    type?: string,
+  ) {
+    const query = this.submissionRepo
+      .createQueryBuilder("submission")
+      .leftJoinAndSelect("submission.user", "user")
+      .leftJoinAndSelect("user.project", "project")
+      .leftJoin(Form, "form", "CAST(form.id AS TEXT) = submission.form_id")
+      .where("form.adminId = :supervisorId", { supervisorId })
+      .orderBy("submission.created_at", "DESC")
+      .skip((page - 1) * limit)
+      .take(limit);
 
-		const query = this.submissionRepo
-			.createQueryBuilder('submission')
-			.leftJoinAndSelect('submission.user', 'user')
-			.leftJoinAndSelect('user.project', 'project')
-			.leftJoin(Form, 'form', 'CAST(form.id AS TEXT) = submission.form_id')
-			.addSelect(['form.id', 'form.adminId', 'form.type'])
-			.orderBy('submission.created_at', 'DESC')
-			.skip((page - 1) * limit)
-			.take(limit);
+    if (form_id) {
+      query.andWhere("submission.form_id = :form_id", { form_id });
+    }
 
-		if (rpgProjectId) {
-			query.andWhere('project.id = :rpgProjectId', { rpgProjectId });
-		}
+    if (project_id) {
+      query.andWhere("project.id = :project_id", { project_id: +project_id });
+    }
 
-		if (form_id) {
-			query.andWhere('submission.form_id = :form_id', { form_id });
-		}
+    if (type) {
+      query.andWhere("form.type = :type", { type });
+    }
 
-		if (type) {
-			query.andWhere('form.type = :type', { type });
-		}
+    const [data, total] = await query.getManyAndCount();
 
-		if (search) {
-			query.andWhere(
-				`(user.email ILIKE :q OR project.name ILIKE :q OR CAST(submission.answers AS TEXT) ILIKE :q)`,
-				{ q: `%${search}%` }
-			);
-		}
+    return {
+      data,
+      total,
+      page,
+      lastPage: Math.ceil(total / limit),
+    };
+  }
 
-		const [data, total] = await query.getManyAndCount();
+  async findAllForRpgAdmin(
+    page = 1,
+    limit = 10,
+    rpgAdminUserId: number,
+    form_id?: string,
+    type?: string,
+    search?: string,
+  ) {
+    // Load RPG Admin's project
+    const rpgAdmin = await this.userRepo.findOne({
+      where: { id: rpgAdminUserId },
+      relations: ["project"],
+    });
+    const rpgProjectId = rpgAdmin?.project?.id;
 
-		return {
-			data,
-			total,
-			page,
-			lastPage: Math.ceil(total / limit),
-		};
-	}
+    const query = this.submissionRepo
+      .createQueryBuilder("submission")
+      .leftJoinAndSelect("submission.user", "user")
+      .leftJoinAndSelect("user.project", "project")
+      .leftJoin(Form, "form", "CAST(form.id AS TEXT) = submission.form_id")
+      .addSelect(["form.id", "form.adminId", "form.type"])
+      .orderBy("submission.created_at", "DESC")
+      .skip((page - 1) * limit)
+      .take(limit);
 
-	async findAll(page = 1, limit = 10, form_id?: string, project_id?: string) {
-		const query = this.submissionRepo
-			.createQueryBuilder('submission')
-			.leftJoinAndSelect('submission.user', 'user')
-			.leftJoinAndSelect('user.project', 'project')
-			.orderBy('submission.created_at', 'DESC')
-			.skip((page - 1) * limit)
-			.take(limit);
+    if (rpgProjectId) {
+      query.andWhere("project.id = :rpgProjectId", { rpgProjectId });
+    }
 
-		if (form_id) {
-			query.andWhere('submission.form_id = :form_id', { form_id });
-		}
+    if (form_id) {
+      query.andWhere("submission.form_id = :form_id", { form_id });
+    }
 
-		if (project_id) {
-			query.andWhere('project.id = :project_id', { project_id: +project_id });
-		}
+    if (type) {
+      query.andWhere("form.type = :type", { type });
+    }
 
-		const [data, total] = await query.getManyAndCount();
+    if (search) {
+      query.andWhere(
+        `(user.email ILIKE :q OR project.name ILIKE :q OR CAST(submission.answers AS TEXT) ILIKE :q)`,
+        { q: `%${search}%` },
+      );
+    }
 
-		return {
-			data,
-			total,
-			page,
-			lastPage: Math.ceil(total / limit),
-		};
-	}
+    const [data, total] = await query.getManyAndCount();
 
-  async findAllByUser(userId: number, type?: string,search?: string) {
+    return {
+      data,
+      total,
+      page,
+      lastPage: Math.ceil(total / limit),
+    };
+  }
+
+  async findAll(page = 1, limit = 10, form_id?: string, project_id?: string) {
+    const query = this.submissionRepo
+      .createQueryBuilder("submission")
+      .leftJoinAndSelect("submission.user", "user")
+      .leftJoinAndSelect("user.project", "project")
+      .orderBy("submission.created_at", "DESC")
+      .skip((page - 1) * limit)
+      .take(limit);
+
+    if (form_id) {
+      query.andWhere("submission.form_id = :form_id", { form_id });
+    }
+
+    if (project_id) {
+      query.andWhere("project.id = :project_id", { project_id: +project_id });
+    }
+
+    const [data, total] = await query.getManyAndCount();
+
+    return {
+      data,
+      total,
+      page,
+      lastPage: Math.ceil(total / limit),
+    };
+  }
+
+  async findAllByUser(userId: number, type?: string, search?: string) {
     const whereClause: any = { user: { id: userId } };
 
     if (type) {
       // Find all forms of the requested type
       const forms = await this.formRepo.find({
         where: { type: type as any },
-        select: ['id']
+        select: ["id"],
       });
 
       if (!forms.length) {
         return { data: [], total: 0 };
       }
 
-      whereClause.form_id = In(forms.map(f => String(f.id)));
+      whereClause.form_id = In(forms.map((f) => String(f.id)));
     }
 
     const data = await this.submissionRepo.find({
       where: whereClause,
-      order: { created_at: 'DESC' },
+      order: { created_at: "DESC" },
     });
 
     return { data, total: data.length };
   }
 
-	async findOne(id: number) {
-		return this.submissionRepo.findOne({
-			where: { id },
-			relations: ['user'],
-		});
-	}
+  async findOne(id: number) {
+    return this.submissionRepo.findOne({
+      where: { id },
+      relations: ["user"],
+    });
+  }
 
-	async update(id: number, dto: any) {
-		const submission = await this.submissionRepo.findOne({
-			where: { id },
-			relations: ['user', 'user.project']
-		});
+  async update(id: number, dto: any) {
+    const submission = await this.submissionRepo.findOne({
+      where: { id },
+      relations: ["user", "user.project"],
+    });
 
-		if (!submission) {
-			throw new NotFoundException('Submission not found');
-		}
+    if (!submission) {
+      throw new NotFoundException("Submission not found");
+    }
 
-		Object.assign(submission, dto);
-		const updatedSubmission = await this.submissionRepo.save(submission);
+    Object.assign(submission, dto);
+    const updatedSubmission = await this.submissionRepo.save(submission);
 
+    return updatedSubmission;
+  }
 
-		return updatedSubmission;
-	}
+  async deleteSubmission(id: number) {
+    const found = await this.submissionRepo.find({
+      where: { id },
+    });
 
-	async deleteSubmission(id: number) {
-		const found = await this.submissionRepo.find({
-			where: { id }
-		});
+    if (!found) throw new NotFoundException("Submission not found");
 
-		if (!found) throw new NotFoundException('Submission not found');
+    return this.submissionRepo.remove(found);
+  }
 
+  async syncSubmissionWithEmployee(submissionId: number, employeeId: string) {
+    const submission = await this.submissionRepo.findOne({
+      where: { id: submissionId },
+    });
 
+    if (!submission) {
+      throw new NotFoundException("Submission not found");
+    }
 
-		return this.submissionRepo.remove(found);
-	}
+    submission.employeeId = employeeId;
+    return this.submissionRepo.save(submission);
+  }
 
-	async syncSubmissionWithEmployee(submissionId: number, employeeId: string) {
-		const submission = await this.submissionRepo.findOne({
-			where: { id: submissionId }
-		});
+  async findByEmployeeId(employeeId: string) {
+    return this.submissionRepo.findOne({
+      where: { employeeId },
+      relations: ["user"],
+    });
+  }
 
-		if (!submission) {
-			throw new NotFoundException('Submission not found');
-		}
+  private chunk<T>(arr: T[], size: number): T[][] {
+    const res: T[][] = [];
+    for (let i = 0; i < arr.length; i += size) res.push(arr.slice(i, i + size));
+    return res;
+  }
 
-		submission.employeeId = employeeId;
-		return this.submissionRepo.save(submission);
-	}
+  async bulkCreateSubmissions(
+    submissions: Array<{
+      userId: number;
+      answers: Record<string, any>;
+      form_id: string;
+    }>,
+  ) {
+    if (!Array.isArray(submissions) || submissions.length === 0) {
+      throw new BadRequestException("submissions must be a non-empty array");
+    }
 
-	async findByEmployeeId(employeeId: string) {
-		return this.submissionRepo.findOne({
-			where: { employeeId },
-			relations: ['user'],
-		});
-	}
+    // 1) validate input
+    const normalized = submissions.map((s) => ({
+      userId: Number(s.userId),
+      form_id: String(s.form_id),
+      answers: s.answers ?? {},
+    }));
 
-	private chunk<T>(arr: T[], size: number): T[][] {
-		const res: T[][] = [];
-		for (let i = 0; i < arr.length; i += size) res.push(arr.slice(i, i + size));
-		return res;
-	}
+    const invalid = normalized.filter(
+      (s) => !Number.isFinite(s.userId) || s.userId <= 0 || !s.form_id,
+    );
+    if (invalid.length) {
+      return {
+        message: "Bulk submission upload completed",
+        totalReceived: submissions.length,
+        totalUpserted: 0,
+        totalFailed: invalid.length,
+        results: invalid.map((s) => ({
+          userId: s.userId || null,
+          status: "failed",
+          reason: "Invalid userId or form_id",
+        })),
+      };
+    }
 
-	async bulkCreateSubmissions(
-		submissions: Array<{ userId: number; answers: Record<string, any>; form_id: string }>,
-	) {
-		if (!Array.isArray(submissions) || submissions.length === 0) {
-			throw new BadRequestException('submissions must be a non-empty array');
-		}
+    // 2) load users in one query
+    const userIds = [...new Set(normalized.map((s) => s.userId))];
+    const users: User[] = await this.userRepo.find({
+      where: { id: In(userIds) },
+    });
+    const existingUserIds = new Set(users.map((u) => u.id));
 
-		// 1) validate input
-		const normalized = submissions.map((s) => ({
-			userId: Number(s.userId),
-			form_id: String(s.form_id),
-			answers: s.answers ?? {},
-		}));
+    const missingUsers = normalized.filter(
+      (s) => !existingUserIds.has(s.userId),
+    );
+    const valid = normalized.filter((s) => existingUserIds.has(s.userId));
 
-		const invalid = normalized.filter(s => !Number.isFinite(s.userId) || s.userId <= 0 || !s.form_id);
-		if (invalid.length) {
-			return {
-				message: 'Bulk submission upload completed',
-				totalReceived: submissions.length,
-				totalUpserted: 0,
-				totalFailed: invalid.length,
-				results: invalid.map(s => ({
-					userId: s.userId || null,
-					status: 'failed',
-					reason: 'Invalid userId or form_id',
-				})),
-			};
-		}
+    // 3) build rows for upsert
+    const rows: Partial<FormSubmission>[] = valid.map((s) => ({
+      userId: s.userId,
+      form_id: s.form_id,
+      answers: s.answers,
+    }));
 
-		// 2) load users in one query
-		const userIds = [...new Set(normalized.map(s => s.userId))];
-		const users: User[] = await this.userRepo.find({ where: { id: In(userIds) } });
-		const existingUserIds = new Set(users.map(u => u.id));
+    // 4) upsert in chunks (fast)
+    const CHUNK_SIZE = 200;
+    for (const part of this.chunk(rows, CHUNK_SIZE)) {
+      await this.submissionRepo.upsert(part, {
+        conflictPaths: ["userId", "form_id"],
+      });
+    }
 
-		const missingUsers = normalized.filter(s => !existingUserIds.has(s.userId));
-		const valid = normalized.filter(s => existingUserIds.has(s.userId));
-
-		// 3) build rows for upsert
-		const rows: Partial<FormSubmission>[] = valid.map(s => ({
-			userId: s.userId,
-			form_id: s.form_id,
-			answers: s.answers,
-		}));
-
-		// 4) upsert in chunks (fast)
-		const CHUNK_SIZE = 200;
-		for (const part of this.chunk(rows, CHUNK_SIZE)) {
-			await this.submissionRepo.upsert(part, {
-				conflictPaths: ['userId', 'form_id'],
-			});
-		}
-
-		return {
-			message: 'Bulk submission upload completed',
-			totalReceived: submissions.length,
-			totalUpserted: valid.length,
-			totalFailed: missingUsers.length,
-			results: [
-				...missingUsers.map(s => ({
-					userId: s.userId,
-					status: 'failed',
-					reason: `User with ID "${s.userId}" not found`,
-				})),
-				...valid.map(s => ({
-					userId: s.userId,
-					status: 'upserted',
-					form_id: s.form_id,
-				})),
-			],
-		};
-	}
-
+    return {
+      message: "Bulk submission upload completed",
+      totalReceived: submissions.length,
+      totalUpserted: valid.length,
+      totalFailed: missingUsers.length,
+      results: [
+        ...missingUsers.map((s) => ({
+          userId: s.userId,
+          status: "failed",
+          reason: `User with ID "${s.userId}" not found`,
+        })),
+        ...valid.map((s) => ({
+          userId: s.userId,
+          status: "upserted",
+          form_id: s.form_id,
+        })),
+      ],
+    };
+  }
 
   async approveSubmission(id: number, approverRole: UserRole) {
     const submission = await this.submissionRepo.findOne({
       where: { id },
-      relations: ['user']
+      relations: ["user"],
     });
-    if (!submission) throw new NotFoundException('Submission not found');
-    
-    const form = await this.formRepo.findOne({ where: { id: parseInt(submission.form_id) } });
+    if (!submission) throw new NotFoundException("Submission not found");
 
-    if (!form || !form.approvalFlow || form.type !== 'employee_request') {
-        submission.status = SubmissionStatus.APPROVED;
-        return this.submissionRepo.save(submission);
+    const form = await this.formRepo.findOne({
+      where: { id: parseInt(submission.form_id) },
+    });
+
+    if (!form || !form.approvalFlow || form.type !== "employee_request") {
+      submission.status = SubmissionStatus.APPROVED;
+      return this.submissionRepo.save(submission);
     }
 
     const flow = form.approvalFlow;
     const currentStatus = submission.status;
 
-    if (approverRole === UserRole.ADMIN) { 
-        if (currentStatus === SubmissionStatus.PENDING_HR) {
-            if (flow === ApprovalFlow.HR_ONLY) {
-                submission.status = SubmissionStatus.APPROVED;
-            } else if (flow === ApprovalFlow.HR_THEN_SUPERVISOR) {
-                submission.status = SubmissionStatus.PENDING_SUPERVISOR;
-            } else {
-                 submission.status = SubmissionStatus.APPROVED;
-            }
+    if (approverRole === UserRole.ADMIN) {
+      if (currentStatus === SubmissionStatus.PENDING_HR) {
+        if (flow === ApprovalFlow.HR_ONLY) {
+          submission.status = SubmissionStatus.APPROVED;
+        } else if (flow === ApprovalFlow.HR_THEN_SUPERVISOR) {
+          submission.status = SubmissionStatus.PENDING_SUPERVISOR;
         } else {
-             submission.status = SubmissionStatus.APPROVED;
+          submission.status = SubmissionStatus.APPROVED;
         }
+      } else {
+        submission.status = SubmissionStatus.APPROVED;
+      }
     } else if (approverRole === UserRole.SUPERVISOR) {
-        if (currentStatus === SubmissionStatus.PENDING_SUPERVISOR) {
-             if (flow === ApprovalFlow.SUPERVISOR_ONLY) {
-                 submission.status = SubmissionStatus.APPROVED;
-             } else if (flow === ApprovalFlow.SUPERVISOR_THEN_HR) {
-                 submission.status = SubmissionStatus.PENDING_HR;
-             } else if (flow === ApprovalFlow.HR_THEN_SUPERVISOR) {
-                 submission.status = SubmissionStatus.APPROVED;
-             }
+      if (currentStatus === SubmissionStatus.PENDING_SUPERVISOR) {
+        if (flow === ApprovalFlow.SUPERVISOR_ONLY) {
+          submission.status = SubmissionStatus.APPROVED;
+        } else if (flow === ApprovalFlow.SUPERVISOR_THEN_HR) {
+          submission.status = SubmissionStatus.PENDING_HR;
+        } else if (flow === ApprovalFlow.HR_THEN_SUPERVISOR) {
+          submission.status = SubmissionStatus.APPROVED;
         }
+      }
     }
 
     return this.submissionRepo.save(submission);
   }
 
   async rejectSubmission(id: number, reason: string) {
-      const submission = await this.submissionRepo.findOne({ where: { id } });
-      if (!submission) throw new NotFoundException('Submission not found');
-      
-      submission.status = SubmissionStatus.REJECTED;
-      return this.submissionRepo.save(submission);
+    const submission = await this.submissionRepo.findOne({ where: { id } });
+    if (!submission) throw new NotFoundException("Submission not found");
+
+    submission.status = SubmissionStatus.REJECTED;
+    return this.submissionRepo.save(submission);
   }
 
   // Optional: Backfill method for missing userIds
@@ -581,19 +624,19 @@ export class FormSubmissionService {
     while (true) {
       const items: FormSubmission[] = await this.submissionRepo.find({
         where: { userId: null },
-        relations: ['user'],
+        relations: ["user"],
         take: batchSize,
       });
 
-			if (items.length === 0) break;
+      if (items.length === 0) break;
 
-			for (const s of items) {
-				if (s.user?.id) s.userId = s.user.id;
-			}
+      for (const s of items) {
+        if (s.user?.id) s.userId = s.user.id;
+      }
 
-			await this.submissionRepo.save(items);
-		}
+      await this.submissionRepo.save(items);
+    }
 
-		return { message: 'Backfill completed' };
-	}
+    return { message: "Backfill completed" };
+  }
 }
