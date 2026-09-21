@@ -234,11 +234,17 @@ export class FormSubmissionService {
 	async resendToCrm(id: number) {
 		const submission = await this.submissionRepo.findOne({ where: { id }, relations: ['user', 'user.project'] });
 		if (!submission) throw new NotFoundException('Submission not found');
-		if (submission.employeeId) throw new BadRequestException('This submission is already linked to CRM');
 		const form = await this.formRepo.findOne({ where: { id: parseInt(submission.form_id) }, relations: ['fields'] });
 		if (!form || form.type === 'employee_request') throw new BadRequestException('Only employee submissions can be resent to CRM');
 		const employeePayload = await this.mapFormToEmployee({ form_id: submission.form_id, answers: submission.answers }, submission.user);
-		const response = await firstValueFrom(this.httpService.post(`${process.env.NEST_PUBLIC_BASE_URL_2}/employees/from-data`, employeePayload, { headers: { Authorization: `Bearer ${process.env.TOKENJWT_SECRET}`, 'Content-Type': 'application/json' } }));
+		const headers = { Authorization: `Bearer ${process.env.TOKENJWT_SECRET}`, 'Content-Type': 'application/json' };
+
+		if (submission.employeeId) {
+			await firstValueFrom(this.httpService.put(`${process.env.NEST_PUBLIC_BASE_URL_2}/employees/${submission.employeeId}`, employeePayload, { headers }));
+			return this.submissionRepo.save(submission);
+		}
+
+		const response = await firstValueFrom(this.httpService.post(`${process.env.NEST_PUBLIC_BASE_URL_2}/employees/from-data`, employeePayload, { headers }));
 		if (!response.data?.success || !response.data?.data?.employee?.id) throw new BadGatewayException('CRM rejected the employee import');
 		submission.employeeId = response.data.data.employee.id;
 		return this.submissionRepo.save(submission);
