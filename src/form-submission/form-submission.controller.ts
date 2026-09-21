@@ -103,8 +103,16 @@ export class FormSubmissionController {
         return this.submissionService.approveSubmission(+id, req.user.role);
     }
 
-    @Patch(':id/reject')
+	@Patch(':id/reject')
     async reject(@Req() req: any, @Param('id') id: string, @Body('reason') reason: string) {
         return this.submissionService.rejectSubmission(+id, reason);
-    }
+	}
+
+	@Post(':id/resend-crm')
+	async resendToCrm(@Req() req: any, @Param('id') id: string) {
+		if (req.user?.role !== 'admin') {
+			throw new ForbiddenException('Only administrators can resend a submission to CRM');
+		}
+		return this.submissionService.resendToCrm(+id);
+	}
 }

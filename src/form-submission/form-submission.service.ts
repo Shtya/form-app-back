@@ -180,7 +180,7 @@ export class FormSubmissionService {
     return this.submissionRepo.save(submission);
   }
 
-  private async mapFormToEmployee(dto: CreateFormSubmissionDto, user: User) {
+	private async mapFormToEmployee(dto: CreateFormSubmissionDto, user: User) {
     const answers = dto.answers || {};
 
     // Fetch the form with its fields to get types and labels
@@ -202,7 +202,8 @@ export class FormSubmissionService {
             type: field.type,
             label: field.label,
           });
-        }
+	}
+
       });
     } else {
       // Fallback: if form or fields not found, just use raw answers as keys
@@ -229,6 +230,19 @@ export class FormSubmissionService {
     }
     return employeePayload;
   }
+
+	async resendToCrm(id: number) {
+		const submission = await this.submissionRepo.findOne({ where: { id }, relations: ['user', 'user.project'] });
+		if (!submission) throw new NotFoundException('Submission not found');
+		if (submission.employeeId) throw new BadRequestException('This submission is already linked to CRM');
+		const form = await this.formRepo.findOne({ where: { id: parseInt(submission.form_id) }, relations: ['fields'] });
+		if (!form || form.type === 'employee_request') throw new BadRequestException('Only employee submissions can be resent to CRM');
+		const employeePayload = await this.mapFormToEmployee({ form_id: submission.form_id, answers: submission.answers }, submission.user);
+		const response = await firstValueFrom(this.httpService.post(`${process.env.NEST_PUBLIC_BASE_URL_2}/employees/from-data`, employeePayload, { headers: { Authorization: `Bearer ${process.env.TOKENJWT_SECRET}`, 'Content-Type': 'application/json' } }));
+		if (!response.data?.success || !response.data?.data?.employee?.id) throw new BadGatewayException('CRM rejected the employee import');
+		submission.employeeId = response.data.data.employee.id;
+		return this.submissionRepo.save(submission);
+	}
 
   async findAllForAdmin(
     page = 1,
